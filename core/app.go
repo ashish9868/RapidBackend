@@ -39,7 +39,7 @@ func NewApp() *App {
 	baseUtil := utils.NewBaseUtil()
 	time.Local = time.UTC
 
-	dbPath := baseUtil.SafeEnvGet("DB_PATH", "app.db")
+	dbPath := baseUtil.SafeEnvGet("DB_PATH", "app_data/app.db")
 
 	dsn := "file:" + dbPath + "?" + url.Values{
 		"_pragma": []string{
