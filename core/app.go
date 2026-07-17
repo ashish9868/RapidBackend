@@ -3,8 +3,11 @@ package core
 import (
 	"context"
 	"database/sql"
+	"embed"
+	"html/template"
 	"log/slog"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -13,13 +16,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/extra/bundebug"
 	_ "modernc.org/sqlite"
 )
 
 type App struct {
-	Bun      *bun.DB
-	BaseUtil *utils.BaseUtil
-	Gin      *gin.Engine
+	Bun        *bun.DB
+	BaseUtil   *utils.BaseUtil
+	Gin        *gin.Engine
+	StaticData map[string]any
 }
 
 type ResourceAction struct {
@@ -34,14 +39,32 @@ type ResourceHandler struct {
 	Delete *ResourceAction
 }
 
-func NewApp() *App {
+func NewApp(embeddedFs embed.FS) *App {
+	os.Setenv("BUNDEBUG", "1")
+	gin.SetMode(gin.ReleaseMode)
 
 	baseUtil := utils.NewBaseUtil()
 	time.Local = time.UTC
 
-	dbPath := baseUtil.SafeEnvGet("DB_PATH", "app_data/app.db")
+	db_folder := "app_data"
 
-	dsn := "file:" + dbPath + "?" + url.Values{
+	stat, err := os.Stat(db_folder)
+
+	createFolder := true
+	if err == nil {
+		if stat.IsDir() {
+			createFolder = false
+		}
+	}
+
+	if createFolder {
+		err := os.Mkdir("app_data", os.ModePerm)
+		if err != nil {
+			panic("Unable to create data directory")
+		}
+	}
+
+	dsn := "file:app_data/app.db?" + url.Values{
 		"_pragma": []string{
 			"journal_mode(WAL)",
 			"synchronous(NORMAL)",
@@ -66,7 +89,25 @@ func NewApp() *App {
 	// Create Bun instance
 	db := bun.NewDB(sqldb, sqlitedialect.New())
 
-	app := &App{Bun: db, BaseUtil: baseUtil, Gin: gin.Default()}
+	db.AddQueryHook(
+		bundebug.NewQueryHook(
+
+			bundebug.WithEnabled(false),
+			bundebug.FromEnv("BUNDEBUG"),
+		),
+	)
+
+	engine := gin.Default()
+
+	tmpl := template.Must(template.ParseFS(embeddedFs, "templates/**/*"))
+
+	engine.SetHTMLTemplate(tmpl)
+
+	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, StaticData: map[string]any{
+		"Year":      time.Now().Year(),
+		"Templates": tmpl.DefinedTemplates(),
+	}}
+	println(tmpl.DefinedTemplates())
 	app.InitializeBaseMigrations()
 	return app
 }
@@ -140,4 +181,5 @@ func (app *App) InitializeBaseMigrations() {
 	app.Bun.NewCreateTable().Model((*models.Collection)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.CollectionField)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.CollectionRecord)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
+	app.Bun.NewCreateTable().Model((*models.Settings)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 }
