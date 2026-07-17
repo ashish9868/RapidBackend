@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"embed"
-	"html/template"
+	"io/fs"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -21,10 +22,9 @@ import (
 )
 
 type App struct {
-	Bun        *bun.DB
-	BaseUtil   *utils.BaseUtil
-	Gin        *gin.Engine
-	StaticData map[string]any
+	Bun      *bun.DB
+	BaseUtil *utils.BaseUtil
+	Gin      *gin.Engine
 }
 
 type ResourceAction struct {
@@ -98,16 +98,30 @@ func NewApp(embeddedFs embed.FS) *App {
 	)
 
 	engine := gin.Default()
+	tmplFS, err := fs.Sub(embeddedFs, "templates")
+	if err != nil {
+		panic(err)
+	}
 
-	tmpl := template.Must(template.ParseFS(embeddedFs, "templates/**/*"))
+	staticFS, err := fs.Sub(tmplFS, "static")
+	if err != nil {
+		panic(err)
+	}
 
-	engine.SetHTMLTemplate(tmpl)
+	engine.StaticFS("/static", http.FS(staticFS))
 
-	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, StaticData: map[string]any{
-		"Year":      time.Now().Year(),
-		"Templates": tmpl.DefinedTemplates(),
-	}}
-	println(tmpl.DefinedTemplates())
+	engine.GET("/", func(ctx *gin.Context) {
+		ctx.FileFromFS("index.htm", http.FS(tmplFS))
+	})
+	engine.NoRoute(func(ctx *gin.Context) {
+		path := ctx.Request.URL.Path
+		if len(path) < 1 {
+			path = "index"
+		}
+		ctx.FileFromFS(path+".htm", http.FS(tmplFS))
+	})
+
+	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine}
 	app.InitializeBaseMigrations()
 	return app
 }

@@ -7,9 +7,8 @@ import (
 	"github.com/ashish9868/rapidbackend/core"
 )
 
-//go:embed templates/layouts/*.html
-//go:embed templates/partials/*.html
-//go:embed templates/pages/*.html
+//go:embed templates/*
+//go:embed templates/**/*
 var embeddedFiles embed.FS
 
 func main() {

@@ -19,7 +19,6 @@ func NewServeCommand(app *core.App) *cobra.Command {
 		Short: "Start RapidBackend server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			public_group := app.Gin.Group("")
 			api_base_group := app.Gin.Group("/api/v1")
 			// routes
 
@@ -28,10 +27,6 @@ func NewServeCommand(app *core.App) *cobra.Command {
 			app.ResourceRoutes("collections", api_base_group, *handlers.NewCollectionsHandler())
 			app.ResourceRoutes("collections/:collection_id/fields", api_base_group, *handlers.NewFieldsHandler())
 			app.ResourceRoutes("collections/:collection_id/records", api_base_group, *handlers.NewRecordsHandler())
-
-			app.ResourceRoutes("/", public_group, *handlers.LoginHandler())
-			app.ResourceRoutes("/signup", public_group, *handlers.SignupHandler())
-			app.ResourceRoutes("/reset-password", public_group, *handlers.ResetPasswordHandler())
 
 			return app.Gin.Run(":" + strconv.Itoa(port))
 
