@@ -7,11 +7,15 @@ import (
 	"github.com/ashish9868/rapidbackend/core"
 )
 
-//go:embed templates/*
-//go:embed templates/**/*
+var (
+	VERSION = "v0.0.1-prod"
+)
+
+//go:embed web/**/*
 var embeddedFiles embed.FS
 
 func main() {
 	app := core.NewApp(embeddedFiles)
+	app.Version = &VERSION
 	cmd.ExecuteRootCommand(app)
 }

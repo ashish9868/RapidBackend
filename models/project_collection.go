@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type Collection struct {
+type ProjectCollection struct {
 	ID string `bun:"id,pk,notnull"`
 
 	ProjectID int64    `bun:"project_id,notnull"`

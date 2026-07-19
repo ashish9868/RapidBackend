@@ -3,9 +3,9 @@ package models
 import "time"
 
 type CollectionField struct {
-	ID           string      `bun:"id,pk,notnull"`
-	CollectionID int64       `bun:"collection_id,notnull"`
-	Collection   *Collection `bun:"rel:belongs-to,join:collection_id=id"`
+	ID           string             `bun:"id,pk,notnull"`
+	CollectionID int64              `bun:"collection_id,notnull"`
+	Collection   *ProjectCollection `bun:"rel:belongs-to,join:collection_id=id"`
 
 	Name         string         `bun:"name"`
 	Type         string         `bun:"type,default:'base'"`

@@ -4,17 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"fmt"
 	"io/fs"
 	"log/slog"
-	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/ashish9868/rapidbackend/models"
 	"github.com/ashish9868/rapidbackend/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"github.com/rs/xid"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/extra/bundebug"
@@ -25,6 +26,8 @@ type App struct {
 	Bun      *bun.DB
 	BaseUtil *utils.BaseUtil
 	Gin      *gin.Engine
+	FeFs     *fs.FS
+	Version  *string
 }
 
 type ResourceAction struct {
@@ -39,32 +42,33 @@ type ResourceHandler struct {
 	Delete *ResourceAction
 }
 
-func NewApp(embeddedFs embed.FS) *App {
-	os.Setenv("BUNDEBUG", "1")
-	gin.SetMode(gin.ReleaseMode)
+func NewApp(embed embed.FS) *App {
 
 	baseUtil := utils.NewBaseUtil()
 	time.Local = time.UTC
 
-	db_folder := "app_data"
+	data_dir := "app_data"
+	env_path := data_dir + "/.env"
+	env_data := []string{
+		fmt.Sprintf(`PORT=%d`, 7007),
+		fmt.Sprintf(`DATA_DIR=%s`, "app_data"),
+		fmt.Sprintf(`BUNDEBUG=%d`, 1),
+		fmt.Sprintf(`GIN_MODE=%s`, "release"),
+		fmt.Sprintf(`ENCRYPTION_KEY=%s`, baseUtil.HashPassword(xid.New().String())),
+	}
+	err := baseUtil.SafeCreateFile(env_path, strings.Join(env_data, "\n"))
 
-	stat, err := os.Stat(db_folder)
-
-	createFolder := true
-	if err == nil {
-		if stat.IsDir() {
-			createFolder = false
-		}
+	if err != nil {
+		println(fmt.Println(err.Error()))
+		panic("Unable to create environment settings.")
 	}
 
-	if createFolder {
-		err := os.Mkdir("app_data", os.ModePerm)
-		if err != nil {
-			panic("Unable to create data directory")
-		}
+	err = godotenv.Load(env_path)
+	if err != nil {
+		fmt.Println("Error loading .env file")
 	}
 
-	dsn := "file:app_data/app.db?" + url.Values{
+	dsn := "file:" + data_dir + "/app.db?" + url.Values{
 		"_pragma": []string{
 			"journal_mode(WAL)",
 			"synchronous(NORMAL)",
@@ -96,33 +100,12 @@ func NewApp(embeddedFs embed.FS) *App {
 			bundebug.FromEnv("BUNDEBUG"),
 		),
 	)
-
+	gin.SetMode(baseUtil.SafeEnvGet("GIN_MODE", gin.ReleaseMode))
 	engine := gin.Default()
-	tmplFS, err := fs.Sub(embeddedFs, "templates")
-	if err != nil {
-		panic(err)
-	}
+	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, FeFs: baseUtil.SubFs(embed, "web")}
+	app.InitializeSystem()
 
-	staticFS, err := fs.Sub(tmplFS, "static")
-	if err != nil {
-		panic(err)
-	}
-
-	engine.StaticFS("/static", http.FS(staticFS))
-
-	engine.GET("/", func(ctx *gin.Context) {
-		ctx.FileFromFS("index.htm", http.FS(tmplFS))
-	})
-	engine.NoRoute(func(ctx *gin.Context) {
-		path := ctx.Request.URL.Path
-		if len(path) < 1 {
-			path = "index"
-		}
-		ctx.FileFromFS(path+".htm", http.FS(tmplFS))
-	})
-
-	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine}
-	app.InitializeBaseMigrations()
+	fmt.Printf("APP will start on PORT: %s\n\n", baseUtil.SafeEnvGet("PORT", "7007"))
 	return app
 }
 
@@ -188,12 +171,14 @@ func (app *App) WithTransaction(ctx context.Context, db *bun.DB, fn func(tx bun.
 	return tx.Commit()
 }
 
-func (app *App) InitializeBaseMigrations() {
+func (app *App) InitializeSystem() {
 	app.Bun.NewCreateTable().Model((*models.SuperAdmin)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.Project)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.ProjectUser)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.Collection)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
+	app.Bun.NewCreateTable().Model((*models.ProjectPage)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
+	app.Bun.NewCreateTable().Model((*models.ProjectCollection)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.CollectionField)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.CollectionRecord)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.Settings)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
+	app.Bun.NewCreateTable().Model((*models.EmailTemplate)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
+	app.Bun.NewCreateTable().Model((*models.SystemSetting)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 }
