@@ -1,23 +1,26 @@
 package cmd
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
+	"strconv"
+	"text/template"
 	"time"
 
 	"github.com/ashish9868/rapidbackend/core"
 	"github.com/ashish9868/rapidbackend/handlers"
+	"github.com/ashish9868/rapidbackend/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 )
 
 func NewServeCommand(app *core.App) *cobra.Command {
 
-	template_data := map[string]any{
-		"Version": app.Version,
-		"Year":    time.Now().Year(),
-		"AppName": "FastBackend",
+	template_data := gin.H{
+		"Version":     app.Version,
+		"Year":        time.Now().Year(),
+		"AppName":     "FastBackend",
+		"DefaultPort": utils.DEFAULT_PORT,
+		"Now":         time.Now().UnixMicro(),
 	}
 	serveCmd := &cobra.Command{
 		Use:   "serve",
@@ -25,8 +28,16 @@ func NewServeCommand(app *core.App) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if app.FeFs != nil {
+				app.Gin.SetFuncMap(template.FuncMap{
+					"coalesce": app.BaseUtil.Coalesce,
+					"merge":    app.BaseUtil.Merge,
+					"dict":     app.BaseUtil.Dict,
+					"toJSON":   app.BaseUtil.ToJSON,
+					"debug":    app.BaseUtil.Debug,
+				})
 				app.Gin.LoadHTMLFS(http.FS(*app.FeFs), "templates/**/*")
-				app.BaseUtil.PrintFiles(*app.FeFs)
+				// static serve
+				app.ServeStatic()
 			}
 			api_base_group := app.Gin.Group("/api/v1")
 			// routes
@@ -36,38 +47,15 @@ func NewServeCommand(app *core.App) *cobra.Command {
 			app.ResourceRoutes("collections/:collection_id/fields", api_base_group, *handlers.NewFieldsHandler())
 			app.ResourceRoutes("collections/:collection_id/records", api_base_group, *handlers.NewRecordsHandler())
 
-			// other handling
+			app.RenderPage("/", template_data)
+			app.RenderPage("/dashboard", template_data)
+			app.RenderPage("/settings", template_data)
+			app.RenderPage("/projects", template_data)
+			app.RenderPage("/collections", template_data)
+			app.RenderFragments(template_data)
+			app.ServeNoRoute(template_data)
 
-			if app.FeFs != nil {
-				template404 := "templates/pages/not_found"
-				// static
-				staticSub := app.BaseUtil.SubFs(*app.FeFs, "static")
-				if staticSub != nil {
-					app.Gin.StaticFS("/static", http.FS(*staticSub))
-				}
-				// web
-				app.Gin.NoRoute(func(ctx *gin.Context) {
-					if app.FeFs != nil {
-						path := strings.TrimPrefix(strings.TrimSpace(ctx.Request.URL.Path), "/")
-						if len(path) < 2 {
-							path = "templates/pages/home"
-						} else if strings.HasPrefix(path, "/partials") {
-							path = "templates" + path
-						} else {
-							path = "templates/pages/" + path
-						}
-						fmt.Println("loading template", path)
-						if app.BaseUtil.FileExists(*app.FeFs, path+".html") {
-							ctx.HTML(http.StatusOK, path, template_data)
-						} else {
-							ctx.HTML(http.StatusNotFound, template404, template_data)
-						}
-						return
-					}
-					ctx.HTML(http.StatusNotFound, template404, template_data)
-				})
-			}
-			port := app.BaseUtil.SafeEnvGet("PORT", "7007")
+			port := app.BaseUtil.SafeEnvGet("PORT", strconv.Itoa(utils.DEFAULT_PORT))
 			return app.Gin.Run(":" + port)
 
 		},

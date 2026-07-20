@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,7 +52,7 @@ func NewApp(embed embed.FS) *App {
 	data_dir := "app_data"
 	env_path := data_dir + "/.env"
 	env_data := []string{
-		fmt.Sprintf(`PORT=%d`, 7007),
+		fmt.Sprintf(`PORT=%d`, utils.DEFAULT_PORT),
 		fmt.Sprintf(`DATA_DIR=%s`, "app_data"),
 		fmt.Sprintf(`BUNDEBUG=%d`, 1),
 		fmt.Sprintf(`GIN_MODE=%s`, "release"),
@@ -102,10 +104,10 @@ func NewApp(embed embed.FS) *App {
 	)
 	gin.SetMode(baseUtil.SafeEnvGet("GIN_MODE", gin.ReleaseMode))
 	engine := gin.Default()
+
 	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, FeFs: baseUtil.SubFs(embed, "web")}
 	app.InitializeSystem()
-
-	fmt.Printf("APP will start on PORT: %s\n\n", baseUtil.SafeEnvGet("PORT", "7007"))
+	fmt.Printf("APP will start on PORT: %s\n\n", baseUtil.SafeEnvGet("PORT", strconv.Itoa(utils.DEFAULT_PORT)))
 	return app
 }
 
@@ -181,4 +183,78 @@ func (app *App) InitializeSystem() {
 	app.Bun.NewCreateTable().Model((*models.CollectionRecord)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.EmailTemplate)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.SystemSetting)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
+}
+
+func (app *App) RenderPage(route string, data gin.H, middlewares ...gin.HandlerFunc) {
+	path := strings.Trim(route, "/")
+	handler := func(ctx *gin.Context) {
+		if app.FeFs == nil {
+			ctx.Status(http.StatusNotFound)
+			return
+		}
+		if path == "" {
+			path = "home"
+		}
+
+		template := "templates/pages/" + path
+		println("Trying to load template :", path)
+		if !app.BaseUtil.FileExists(*app.FeFs, template+".html") {
+			template = "templates/pages/not_found"
+		}
+		ctx.HTML(http.StatusOK, template, data)
+	}
+	handlers := append(middlewares, handler)
+	app.Gin.GET("/"+path, handlers...)
+}
+
+func (app *App) RenderFragments(data gin.H, middlewares ...gin.HandlerFunc) {
+	handler := func(ctx *gin.Context) {
+		fragment := strings.TrimSpace(ctx.Params.ByName("fragment"))
+		if app.FeFs == nil {
+			ctx.Status(http.StatusNotFound)
+			return
+		}
+		if fragment == "" {
+			fragment = "none"
+		}
+
+		fragment = "templates/fragments/" + fragment
+		println("Trying to load fragment :", fragment)
+		if !app.BaseUtil.FileExists(*app.FeFs, fragment+".html") {
+			ctx.Status(http.StatusNotFound)
+			return
+		}
+		values := ctx.Request.URL.Query()
+		for name, value := range values {
+			data[name] = value[0]
+		}
+		// time.Sleep(5 * time.Second)
+		ctx.HTML(http.StatusOK, fragment, data)
+	}
+	handlers := append(middlewares, handler)
+	app.Gin.GET("/fragments/:fragment", handlers...)
+}
+
+func (app *App) ServeStatic() {
+	if app.FeFs != nil {
+		staticSub := app.BaseUtil.SubFs(*app.FeFs, "static")
+		if staticSub != nil {
+			app.Gin.StaticFS("/static", http.FS(*staticSub))
+		}
+	}
+}
+
+func (app *App) ServeNoRoute(data gin.H) {
+	app.Gin.NoRoute(func(ctx *gin.Context) {
+		if app.FeFs == nil {
+			ctx.Status(http.StatusNotFound)
+			return
+		}
+		path := "templates/pages/not_found"
+		if !app.BaseUtil.FileExists(*app.FeFs, path+".html") {
+			ctx.Status(http.StatusNotFound)
+			return
+		}
+		ctx.HTML(http.StatusOK, path, data)
+	})
 }

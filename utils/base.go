@@ -26,6 +26,10 @@ import (
 	"gopkg.in/mail.v2"
 )
 
+const (
+	DEFAULT_PORT = 7003
+)
+
 type BaseUtil struct{}
 
 func NewBaseUtil() *BaseUtil {
