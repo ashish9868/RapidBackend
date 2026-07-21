@@ -54,7 +54,7 @@ HttpClient.interceptors.response.use(
                 ToastsUtil.showError(`Site is undergoing maintaince please try after some time.`)
                 return Promise.resolve({ success: false, code: 503, errors: { global: 'Site is undergoing maintaince please try after some time.' } });
             case 422:
-                let { body, errors } = errorResponse?.data ?? {};
+                let errors = errorResponse?.data ?? {};
                 if (errors instanceof Blob) {
                     try {
                         const text = await errors.text();       // Convert Blob to text
@@ -73,7 +73,7 @@ HttpClient.interceptors.response.use(
                 if (errors?.global) {
                     ToastsUtil.showError(errors?.global)
                 }
-                return Promise.resolve({ success: false, errors, body, code: 422 });
+                return Promise.resolve({ success: false, errors, code: 422 });
 
             case 429:
                 ToastsUtil.showError("Too Many Requests!");

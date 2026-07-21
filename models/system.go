@@ -16,10 +16,10 @@ type SuperAdmin struct {
 
 type AccessKeyToken struct {
 	ID           string       `bun:"id,pk,notnull"`
-	UserID       string       `bun:"project_user_id,notnull"`
+	UserID       *string      `bun:"project_user_id"`
 	User         *ProjectUser `bun:"rel:belongs-to,join:project_user_id=id"`
-	SuperAdminID string       `bun:"super_admin_id,notnull"`
-	SuperAdmin   *ProjectUser `bun:"rel:belongs-to,join:super_admin_id=id"`
+	SuperAdminID *string      `bun:"super_admin_id"`
+	SuperAdmin   *SuperAdmin  `bun:"rel:belongs-to,join:super_admin_id=id"`
 	Token        string       `bun:"access_token"`
 	RefreshToken *string      `bun:"refresh_token"`
 	CreatedAt    time.Time    `bun:"created_at,nullzero,notnull,default:current_timestamp"`

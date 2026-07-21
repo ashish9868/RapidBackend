@@ -43,15 +43,26 @@ func NewCreateSuperAdminCommand(app *core.App) *cobra.Command {
 				return errors.New("email is required")
 			}
 
+			exists := models.SuperAdmin{}
+			total, err := app.Bun.NewSelect().Model(&exists).Where("email = ?", email).Count(context.Background())
+
+			if err != nil {
+				return err
+			}
+
+			if total > 0 {
+				return errors.New("\n\nemail already exists\n\n")
+			}
+
 			fmt.Print("Password: ")
 			passwordBytes, err := term.ReadPassword(os.Stdin.Fd())
 			if err != nil {
 				return err
 			}
-			fmt.Println()
 
 			password := string(passwordBytes)
 
+			fmt.Println("\n")
 			fmt.Print("Confirm Password: ")
 			confirmBytes, err := term.ReadPassword(os.Stdin.Fd())
 			if err != nil {
