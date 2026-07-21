@@ -1,7 +1,9 @@
-{{define "templates/pages/dashboard"}}
-{{template "layouts/private/open" .}}
-<!-- Data Table (Takes up 2/3 cols) -->
-<div class="bg-white border border-slate-200 rounded-xl shadow-sm lg:col-span-2 overflow-hidden flex flex-col">
+<script>
+    import PrivateLayout from "../layouts/PrivateLayout.svelte";
+</script>
+
+<PrivateLayout>
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm lg:col-span-2 overflow-hidden flex flex-col">
   <div class="p-5 border-b border-slate-200 flex items-center justify-between">
     <h3 class="font-bold text-slate-900">Recent Transactions</h3>
     <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-700">View all</a>
@@ -149,5 +151,4 @@
     </ul>
   </div>
 </div>
-{{template "layouts/private/close" .}}
-{{end}}
+</PrivateLayout>
