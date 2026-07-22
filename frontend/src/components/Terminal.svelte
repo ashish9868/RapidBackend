@@ -1,7 +1,6 @@
 <!-- Simulated Terminal Window -->
 <script>
-    let { AppName, Version, DefaultPort } = $props();
-
+    import { Global } from "../constants/Global";
 </script>
 
 <div
@@ -24,7 +23,7 @@
             </div>
 
             <span class="text-zinc-400 text-sm font-medium">
-                {AppName} CLI
+                {Global.AppName} CLI
             </span>
 
             <div class="w-12"></div>
@@ -33,8 +32,8 @@
         <!-- Terminal -->
         <div class="bg-black text-sm font-mono p-6 text-zinc-200 leading-7">
             <div class="text-cyan-400">
-                {AppName}
-                {Version}
+                {Global.AppName}
+                {Global.Version}
             </div>
 
             <div class="text-zinc-500 mb-5">
@@ -51,7 +50,7 @@
                 <span>
                     Server running on
                     <span class="text-cyan-400 font-semibold"
-                        >http://localhost:{DefaultPort}</span
+                        >http://localhost:{Global.DefaultPort}</span
                     >
                 </span>
             </div>

@@ -4,7 +4,7 @@ import { ToastsUtil } from "../utils/ToastsUtil";
 axios.defaults.withCredentials = true;
 
 
-export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7003/api/v1'
+export const BASE_URL = `/api/v1`
 
 const HttpClient = axios.create({
     baseURL: BASE_URL,
@@ -101,7 +101,7 @@ HttpClient.interceptors.response.use(
 export const Resources = {
     LOGIN: 'login',
     LOGOUT: 'logout',
-    RESET_PASSWORD: 'reset_password',
+    RESET_PASSWORD: 'reset-password',
 }
 
 

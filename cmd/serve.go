@@ -21,7 +21,7 @@ func NewServeCommand(app *core.App) *cobra.Command {
 			api_base_group := app.Gin.Group("/api/v1")
 			// routes
 			app.ResourceRoutes("login", api_base_group, *handlers.LoginHandler())
-			app.ResourceRoutes("health", api_base_group, *handlers.HealthHandler())
+			app.ResourceRoutes("reset-password", api_base_group, *handlers.ResetPasswordHandler())
 			app.ResourceRoutes("projects", api_base_group, *handlers.NewProjectsHandler())
 			app.ResourceRoutes("collections", api_base_group, *handlers.NewCollectionsHandler())
 			app.ResourceRoutes("collections/:collection_id/fields", api_base_group, *handlers.NewFieldsHandler())

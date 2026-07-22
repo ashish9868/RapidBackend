@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/ashish9868/rapidbackend/core"
 	"github.com/ashish9868/rapidbackend/services"
@@ -21,7 +20,6 @@ func LoginHandler() *core.ResourceHandler {
 	return &core.ResourceHandler{
 		Create: &core.ResourceAction{
 			Handler: func(ctx *gin.Context, app *core.App) {
-				time.Sleep(5 * time.Second)
 				var form LoginForm
 				// ShouldBind checks Content-Type to select a binding engine automatically
 				if err := ctx.ShouldBindJSON(&form); err != nil {
@@ -33,7 +31,7 @@ func LoginHandler() *core.ResourceHandler {
 
 				err := validation.ValidateStruct(&form,
 					validation.Field(&form.Email,
-						validation.Required.Error("Username is required"),
+						validation.Required.Error("Email is required"),
 						is.Email.Error("Please Provide a valid Email"),
 					),
 					validation.Field(&form.Password,
