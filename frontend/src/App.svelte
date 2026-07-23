@@ -5,8 +5,9 @@
   import AuthPage from "./pages/AuthPage.svelte";
   import { LoginMode } from "./constants/Auth";
   import { ResourceApis, Resources } from "./api/ResourceApis";
-    import SplashPage from "./pages/SplashPage.svelte";
-  let detecting = $state(true)
+  import SplashPage from "./pages/SplashPage.svelte";
+  import { ToastsUtil } from "./utils/ToastsUtil";
+  let detecting = $state(true);
   let user = $state(null);
   let routes = $state([
     {
@@ -29,12 +30,11 @@
       props: {
         mode: LoginMode.SET_PASSWORD,
       },
-    }
+    },
   ]);
   $effect(async () => {
     const [data] = (await ResourceApis.getPaginated(Resources.Me)).results;
     user = data;
-    console.log(data)
     if (data?.ID) {
       routes = [
         {
@@ -42,17 +42,16 @@
           component: DashboardPage,
         },
       ];
-      console.log(routes, data?.ID)
-      goto(routes[0].path)
+      console.log(routes, data?.ID);
     }
-    detecting = false
+    detecting = false;
+    !data?.ID && ToastsUtil.showError("Session Expired!", 5000);
+    goto(routes[0].path);
   });
-
 </script>
 
-
 {#if detecting}
-<SplashPage />
+  <SplashPage />
 {:else}
-<Router {routes} />
+  <Router {routes} />
 {/if}

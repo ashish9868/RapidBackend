@@ -3,7 +3,7 @@ import { toasts } from "svelte-toasts";
 
 
 export const ToastsUtil = {
-    showError: (description, duration = 5000) => {
+    showError: (description, duration = 5000, onRemove = () => {}) => {
         toasts.add({
             title: 'Please Note',
             description,
@@ -15,10 +15,12 @@ export const ToastsUtil = {
             type: 'error',
             theme: 'dark',
             onClick: () => { },
-            onRemove: () => { },
+            onRemove: () => { 
+                onRemove && onRemove()
+            },
         })
     },
-    showSuccess: (description, duration = 5000) => {
+    showSuccess: (description, duration = 5000, onRemove = () => {}) => {
         toasts.add({
             title: 'Success',
             description,
@@ -30,7 +32,7 @@ export const ToastsUtil = {
             type: 'success',
             theme: 'dark',
             onClick: () => { },
-            onRemove: () => { },
+            onRemove:                 onRemove && onRemove(),
         })
     }
 }

@@ -42,8 +42,10 @@ HttpClient.interceptors.response.use(
         const errorResponse = error?.response;
         switch (errorResponse?.status) {
             case 401:
-                ToastsUtil.showError("Session Expired!");
-                window.location = '/'
+                console.log(errorResponse?.data || {})
+                if (window.location.pathname != "/" && window.location.pathname.length > 0){
+                    window.location = '/'
+                }
                 return Promise.resolve({ success: false, code: 401, errors: { global: 'Unauthorized.' } });
 
             case 403:

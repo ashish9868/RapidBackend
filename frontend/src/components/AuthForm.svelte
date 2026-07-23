@@ -62,7 +62,7 @@
                 form.email = "";
                 form.password = "";
 
-                isLogin && goto("/dashboard");
+                isLogin && (window.location = "/dashboard");
                 isResetPassword &&
                     ToastsUtil.showSuccess(
                         "You'll get a reset password instruction on your email, if Email is valid.",
