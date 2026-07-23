@@ -5,6 +5,7 @@ import (
 
 	"github.com/ashish9868/rapidbackend/core"
 	"github.com/ashish9868/rapidbackend/handlers"
+	"github.com/ashish9868/rapidbackend/middlewares"
 	"github.com/ashish9868/rapidbackend/utils"
 	"github.com/spf13/cobra"
 )
@@ -22,6 +23,7 @@ func NewServeCommand(app *core.App) *cobra.Command {
 			// routes
 			app.ResourceRoutes("login", api_base_group, *handlers.LoginHandler())
 			app.ResourceRoutes("reset-password", api_base_group, *handlers.ResetPasswordHandler())
+			app.ResourceRoutes("me", api_base_group, *handlers.MeHandler(), middlewares.NewAuthMiddleWare(app, true))
 			app.ResourceRoutes("projects", api_base_group, *handlers.NewProjectsHandler())
 			app.ResourceRoutes("collections", api_base_group, *handlers.NewCollectionsHandler())
 			app.ResourceRoutes("collections/:collection_id/fields", api_base_group, *handlers.NewFieldsHandler())

@@ -174,9 +174,8 @@ func (app *App) WithTransaction(ctx context.Context, db *bun.DB, fn func(tx bun.
 }
 
 func (app *App) InitializeSystem() {
-	app.Bun.NewCreateTable().Model((*models.SuperAdmin)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.Project)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.ProjectUser)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
+	app.Bun.NewCreateTable().Model((*models.User)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.AccessKeyToken)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.ProjectPage)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.ProjectCollection)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
@@ -217,4 +216,11 @@ func (app *App) ErrorJson(body any, err error) gin.H {
 		"body":   body,
 		"errors": err,
 	}
+}
+
+func (app *App) HttpUnauthorized(ctx *gin.Context) {
+	ctx.JSON(http.StatusUnauthorized, gin.H{
+		"Uauthorized": true,
+	})
+	ctx.Abort()
 }

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ashish9868/rapidbackend/core"
@@ -18,11 +19,7 @@ func NewAuthService(app *core.App) *AuthService {
 }
 
 func (a *AuthService) LoginByEmail(email string, password string) *models.AccessKeyToken {
-	token := a.LoginByEmailSuperadmin(email, password)
-	if token != nil {
-		return token
-	}
-	user := models.ProjectUser{}
+	user := models.User{}
 	err := a.App.Bun.NewSelect().Model(&user).Where("email = ? AND email_verified_at IS NOT NULL AND is_active = ?", email, true).Scan(context.Background())
 	if err != nil {
 		println("Error is selecting user: ", err.Error())
@@ -38,13 +35,13 @@ func (a *AuthService) LoginByEmail(email string, password string) *models.Access
 	expiry := time.Now().Add(1 * time.Hour)
 	_, access_token, _ := a.App.BaseUtil.GenerateRandomHash()
 	_, refresh_token, _ := a.App.BaseUtil.GenerateRandomHash()
-	token = &models.AccessKeyToken{
+	token := &models.AccessKeyToken{
 		ID:           xid.New().String(),
-		UserID:       &user.ID,
+		UserID:       user.ID,
 		ExpiresAt:    &expiry,
-		Token:        access_token,
+		Token:        a.App.BaseUtil.HashPassword(access_token),
 		CreatedAt:    time.Now(),
-		RefreshToken: &refresh_token,
+		RefreshToken: a.App.BaseUtil.HashPassword(refresh_token),
 	}
 	_, err = a.App.Bun.NewInsert().Model(token).Exec(context.Background())
 	if err != nil {
@@ -55,35 +52,12 @@ func (a *AuthService) LoginByEmail(email string, password string) *models.Access
 	return token
 }
 
-func (a *AuthService) LoginByEmailSuperadmin(email string, password string) *models.AccessKeyToken {
-	superadmin := models.SuperAdmin{}
-	err := a.App.Bun.NewSelect().Model(&superadmin).Where("email = ? AND email_verified_at IS NOT NULL AND is_active = ?", email, true).Scan(context.Background())
+func (a *AuthService) GetUserByToken(token string) *models.User {
+	aToken := &models.AccessKeyToken{}
+	err := a.App.Bun.NewSelect().Model(aToken).Relation("User").Where("access_token = ? AND expires_at > ?", token, time.Now()).Scan(context.Background())
 	if err != nil {
-		println("Error is selecting user: ", err.Error())
+		fmt.Println("Error while testing token: ", err.Error())
 		return nil
 	}
-	if len(superadmin.ID) < 1 {
-		return nil
-	}
-	if !a.App.BaseUtil.CheckPassword(superadmin.Password, password) {
-		return nil
-	}
-	expiry := time.Now().Add(1 * time.Hour)
-	_, access_token, _ := a.App.BaseUtil.GenerateRandomHash()
-	_, refresh_token, _ := a.App.BaseUtil.GenerateRandomHash()
-	token := &models.AccessKeyToken{
-		ID:           xid.New().String(),
-		SuperAdminID: &superadmin.ID,
-		ExpiresAt:    &expiry,
-		Token:        access_token,
-		CreatedAt:    time.Now(),
-		RefreshToken: &refresh_token,
-	}
-	_, err = a.App.Bun.NewInsert().Model(token).Exec(context.Background())
-	if err != nil {
-		println("Error creating session: ", err.Error())
-		return nil
-	}
-
-	return token
+	return aToken.User
 }

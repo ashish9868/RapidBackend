@@ -43,8 +43,8 @@ func NewCreateSuperAdminCommand(app *core.App) *cobra.Command {
 				return errors.New("email is required")
 			}
 
-			exists := models.SuperAdmin{}
-			total, err := app.Bun.NewSelect().Model(&exists).Where("email = ?", email).Count(context.Background())
+			exists := models.User{}
+			total, err := app.Bun.NewSelect().Model(&exists).Where("email = ? AND role = ?", email, models.RoleSuperAdmin).Count(context.Background())
 
 			if err != nil {
 				return err
@@ -82,13 +82,14 @@ func NewCreateSuperAdminCommand(app *core.App) *cobra.Command {
 			}
 
 			verifiedAt := time.Now()
-			_, err = app.Bun.NewInsert().Model(&models.SuperAdmin{
+			_, err = app.Bun.NewInsert().Model(&models.User{
 				ID:              xid.New().String(),
 				FirstName:       xid.New().String(),
 				Email:           email,
 				Password:        app.BaseUtil.HashPassword(password),
 				EmailVerifiedAt: &verifiedAt,
 				IsActive:        true,
+				Role:            models.RoleSuperAdmin,
 			}).Exec(context.Background())
 
 			if err != nil {
@@ -124,7 +125,7 @@ func NewDeleteSuperAdminCommand(app *core.App) *cobra.Command {
 			}
 
 			println(email)
-			_, err = app.Bun.NewDelete().Model((*models.SuperAdmin)(nil)).Where("email = ?", strings.TrimSpace(email)).Exec(context.Background())
+			_, err = app.Bun.NewDelete().Model((*models.User)(nil)).Where("email = ?", strings.TrimSpace(email)).Exec(context.Background())
 
 			if err != nil {
 				fmt.Println("Unable to delete user : " + err.Error())

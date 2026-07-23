@@ -43,6 +43,7 @@ HttpClient.interceptors.response.use(
         switch (errorResponse?.status) {
             case 401:
                 ToastsUtil.showError("Session Expired!");
+                window.location = '/'
                 return Promise.resolve({ success: false, code: 401, errors: { global: 'Unauthorized.' } });
 
             case 403:
@@ -101,6 +102,7 @@ HttpClient.interceptors.response.use(
 export const Resources = {
     LOGIN: 'login',
     LOGOUT: 'logout',
+    Me: 'me',
     RESET_PASSWORD: 'reset-password',
 }
 

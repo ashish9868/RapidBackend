@@ -1,17 +1,20 @@
 <script>
   import Counter from "./lib/Counter.svelte";
-  import { route, Router } from "@mateothegreat/svelte5-router";
+  import { goto, route, Router } from "@mateothegreat/svelte5-router";
   import DashboardPage from "./pages/DashboardPage.svelte";
   import AuthPage from "./pages/AuthPage.svelte";
-    import { LoginMode } from "./constants/Auth";
-
-  const routes = [
+  import { LoginMode } from "./constants/Auth";
+  import { ResourceApis, Resources } from "./api/ResourceApis";
+    import SplashPage from "./pages/SplashPage.svelte";
+  let detecting = $state(true)
+  let user = $state(null);
+  let routes = $state([
     {
       path: "/",
       component: AuthPage,
       props: {
-        mode: LoginMode.LOGIN
-      }
+        mode: LoginMode.LOGIN,
+      },
     },
     {
       path: "/reset-password",
@@ -26,12 +29,30 @@
       props: {
         mode: LoginMode.SET_PASSWORD,
       },
-    },
-    {
-      path: "/dashboard",
-      component: DashboardPage,
-    },
-  ];
+    }
+  ]);
+  $effect(async () => {
+    const [data] = (await ResourceApis.getPaginated(Resources.Me)).results;
+    user = data;
+    console.log(data)
+    if (data?.ID) {
+      routes = [
+        {
+          path: "/dashboard",
+          component: DashboardPage,
+        },
+      ];
+      console.log(routes, data?.ID)
+      goto(routes[0].path)
+    }
+    detecting = false
+  });
+
 </script>
 
+
+{#if detecting}
+<SplashPage />
+{:else}
 <Router {routes} />
+{/if}

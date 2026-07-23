@@ -4,7 +4,7 @@
     /**
      * @param {{ label: string, required: boolean, type: "text" | "password" | "date" | "email" | "number" | "color", name: string, placeholder: string, error: string, value: string, iconStart: import('svelte').ComponentType }} props
      */
-    let { label, required, type, name, value = $bindable(), placeholder, error, iconStart: IconStart } = $props();
+    let { label, required, type, name, value = $bindable(), placeholder, error, iconStart: IconStart, ...rest } = $props();
     let passwordToggle = $state(false);
     const isPassword = $derived(type === "password");
 </script>
@@ -30,6 +30,7 @@
         bind:value
         placeholder={isPassword ? "••••••••" : placeholder}
         class="w-full pl-10 pr-10 py-2 text-sm bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-zinc-100 placeholder-zinc-700 transition-colors"
+        {...rest}
     />
     {#if isPassword}
         <button
