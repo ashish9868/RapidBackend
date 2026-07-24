@@ -183,6 +183,18 @@ func (app *App) InitializeSystem() {
 	app.Bun.NewCreateTable().Model((*models.ProjectCollectionRecord)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.EmailTemplate)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.SystemSetting)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
+
+	t := time.Now()
+	app.Bun.NewInsert().Model(&models.User{
+		ID:              xid.New().String(),
+		FirstName:       "Ashish",
+		LastName:        "Kumar",
+		Email:           "funappzco@gmail.com",
+		Password:        app.BaseUtil.HashPassword("Asdf1234@#$"),
+		IsActive:        true,
+		EmailVerifiedAt: &t,
+		Role:            models.RoleSuperAdmin,
+	}).Exec(context.Background())
 }
 
 func (app *App) ServeStatic() {
@@ -218,9 +230,25 @@ func (app *App) ErrorJson(body any, err error) gin.H {
 	}
 }
 
+func (app *App) SetAuthCookie(ctx *gin.Context, value string, maxAge int) {
+	if maxAge < 60 {
+		token, _ := ctx.Cookie(gin.AuthUserKey)
+		if len(token) > 0 {
+			expiry := time.Now().Add(-1 * time.Hour)
+			app.Bun.NewDelete().Model(&models.AccessKeyToken{
+				ExpiresAt: &expiry,
+			}).Where("access_token = ?", token).Exec(context.Background())
+		}
+	}
+	ctx.SetCookie(gin.AuthUserKey, value, maxAge, "/", ctx.Request.Host, false, true)
+}
+
 func (app *App) HttpUnauthorized(ctx *gin.Context) {
+	val, _ := ctx.Cookie(gin.AuthUserKey)
+	app.SetAuthCookie(ctx, "", -1)
 	ctx.JSON(http.StatusUnauthorized, gin.H{
 		"Uauthorized": true,
+		"Redirect":    len(val) > 0,
 	})
 	ctx.Abort()
 }

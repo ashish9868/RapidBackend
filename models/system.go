@@ -13,8 +13,8 @@ const (
 
 type AccessKeyToken struct {
 	ID           string     `bun:"id,pk,notnull"`
-	UserID       string     `bun:"project_user_id,notnull"`
-	User         *User      `bun:"rel:belongs-to,join:project_user_id=id"`
+	UserID       string     `bun:"user_id,notnull"`
+	User         *User      `bun:"rel:belongs-to,join:user_id=id"`
 	Token        string     `bun:"access_token"`
 	RefreshToken string     `bun:"refresh_token"`
 	CreatedAt    time.Time  `bun:"created_at,nullzero,notnull,default:current_timestamp"`

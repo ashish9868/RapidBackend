@@ -1,1 +1,23 @@
 @import "tailwindcss";
+button, a {
+    cursor: pointer !important;
+}
+
+@theme {
+  --color-primary: oklch(0.62 0.19 255);
+  --color-surface: oklch(0.18 0.02 255);
+  --radius-md: 0.5rem;
+}
+
+:root {
+    --primary: #2563eb;
+    --surface: #18181b;
+}
+
+[data-theme="green"] {
+    --primary: #22c55e;
+}
+
+[data-theme="purple"] {
+    --primary: #9333ea;
+}

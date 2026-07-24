@@ -1,12 +1,43 @@
 <script>
     import { FlatToast, ToastContainer } from "svelte-toasts";
     import AppToastContainer from "../components/AppToastContainer.svelte";
+    import {
+        Activity,
+        AlertCircle,
+        ArrowDownRight,
+        ArrowUpRight,
+        BarChart,
+        BarChart2,
+        Bell,
+        CreditCard,
+        DollarSign,
+        Download,
+        HelpCircle,
+        Layers,
+        LayoutDashboard,
+        LogOut,
+        Plus,
+        Search,
+        Settings,
+        Users,
+    } from "@lucide/svelte";
+    import { ResourceApis, Resources } from "../api/ResourceApis";
+    import { Routes } from "../routes";
+    import { active, route } from "@mateothegreat/svelte5-router";
+    import { Global } from "../constants/Global";
+    import FormInput from "../components/form/FormInput.svelte";
+    import FormSelect from "../components/form/FormSelect.svelte";
+    import ProjectSelect from "../components/ProjectSelect.svelte";
 
     let { children } = $props();
+    let projects = $state([
+        {label: "Default", value: 'default'}
+    ])
 </script>
 
 <div class="flex h-screen overflow-hidden">
     <!-- SIDEBAR -->
+     
     <aside
         class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between hidden md:flex shrink-0"
     >
@@ -15,49 +46,39 @@
             <div
                 class="h-16 flex items-center px-6 border-b border-slate-800 gap-2"
             >
-                <i data-lucide="layers" class="text-indigo-400 w-6 h-6"></i>
-                <span class="text-white font-semibold text-lg tracking-wide"
-                    >Rapid Backend 33</span
-                >
             </div>
 
             <!-- Navigation Links -->
             <nav class="p-4 space-y-1">
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-medium transition-colors"
-                >
-                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 hover:text-slate-100 transition-colors"
-                >
-                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-                    <span>Analytics</span>
-                </a>
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 hover:text-slate-100 transition-colors"
-                >
-                    <i data-lucide="users" class="w-5 h-5"></i>
-                    <span>Customers</span>
-                </a>
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 hover:text-slate-100 transition-colors"
-                >
-                    <i data-lucide="credit-card" class="w-5 h-5"></i>
-                    <span>Transactions</span>
-                </a>
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 hover:text-slate-100 transition-colors"
-                >
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                    <span>Settings</span>
-                </a>
+                {#each Object.values(Routes) as r}
+                    {#if r.showInMenu}
+                        {#if r?.sectionTitle}
+                            <div class="flex items-center my-4">
+                                <div
+                                    class="flex-grow border-t border-gray-300"
+                                ></div>
+                                <span class="px-3 text-gray-500 font-medium"
+                                    >{r.sectionTitle}</span
+                                >
+                                <div
+                                    class="flex-grow border-t border-gray-300"
+                                ></div>
+                            </div>
+                        {/if}
+                        <a
+                            href={r.path}
+                            use:route={{
+                                active: {
+                                    class: "bg-indigo-700",
+                                },
+                            }}
+                            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-white font-medium transition-colors"
+                        >
+                            <r.icon class="w-5 h-5" />
+                            <span>{r.title}</span>
+                        </a>
+                    {/if}
+                {/each}
             </nav>
         </div>
 
@@ -78,8 +99,14 @@
                     <p class="text-xs text-slate-500">alex@acme.com</p>
                 </div>
             </div>
-            <button class="text-slate-500 hover:text-slate-300">
-                <i data-lucide="log-out" class="w-5 h-5"></i>
+            <button
+                onclick={async () => {
+                    await ResourceApis.getPaginated(Resources.LOGOUT);
+                    window.location = "/";
+                }}
+                class="text-slate-500 cursor-pointer hover:text-slate-300"
+            >
+                <LogOut class="w-5 h-5" />
             </button>
         </div>
     </aside>
@@ -91,25 +118,13 @@
             class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0"
         >
             <!-- Search Bar -->
-            <div class="relative w-64 md:w-96">
-                <span
-                    class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400"
-                >
-                    <i data-lucide="search" class="w-4 h-4"></i>
-                </span>
-                <input
-                    type="text"
-                    placeholder="Search dashboard..."
-                    class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                />
-            </div>
-
+            <ProjectSelect />
             <!-- Right Side Actions -->
             <div class="flex items-center gap-4">
                 <button
                     class="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors"
                 >
-                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <Bell class="w-5 h-5" />
                     <span
                         class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"
                     ></span>
@@ -117,7 +132,7 @@
                 <button
                     class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors"
                 >
-                    <i data-lucide="help-circle" class="w-5 h-5"></i>
+                    <HelpCircle class="w-5 h-5" />
                 </button>
             </div>
         </header>
@@ -140,12 +155,12 @@
                     <button
                         class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm font-medium hover:bg-slate-50 transition-colors"
                     >
-                        <i data-lucide="download" class="w-4 h-4"></i> Export
+                        <Download class="w-4 h-4" /> Export
                     </button>
                     <button
                         class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors"
                     >
-                        <i data-lucide="plus" class="w-4 h-4"></i> New Report
+                        <Plus class="w-4 h-4" /> New Report
                     </button>
                 </div>
             </div>
@@ -167,12 +182,12 @@
                         <span
                             class="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full"
                         >
-                            <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                            <ArrowUpRight class="w-3 h-3" />
                             +12.5%
                         </span>
                     </div>
                     <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
-                        <i data-lucide="dollar-sign" class="w-5 h-5"></i>
+                        <DollarSign class="w-5 h-5" />
                     </div>
                 </div>
 
@@ -191,12 +206,12 @@
                         <span
                             class="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full"
                         >
-                            <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                            <ArrowUpRight class="w-3 h-3" />
                             +8.2%
                         </span>
                     </div>
                     <div class="p-3 bg-sky-50 text-sky-600 rounded-lg">
-                        <i data-lucide="users" class="w-5 h-5"></i>
+                        <Users class="w-5 h-5" />
                     </div>
                 </div>
 
@@ -213,12 +228,11 @@
                         <span
                             class="inline-flex items-center gap-1 text-xs font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full"
                         >
-                            <i data-lucide="arrow-down-right" class="w-3 h-3"
-                            ></i> -1.4%
+                            <ArrowDownRight class="w-3 h-3" /> -1.4%
                         </span>
                     </div>
                     <div class="p-3 bg-amber-50 text-amber-600 rounded-lg">
-                        <i data-lucide="activity" class="w-5 h-5"></i>
+                        <Activity class="w-5 h-5" />
                     </div>
                 </div>
 
@@ -239,7 +253,7 @@
                         </span>
                     </div>
                     <div class="p-3 bg-rose-50 text-rose-600 rounded-lg">
-                        <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                        <AlertCircle class="w-5 h-5" />
                     </div>
                 </div>
             </div>
@@ -247,6 +261,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {@render children()}
             </div>
-                <AppToastContainer />
+            <AppToastContainer />
+        </main>
     </div>
 </div>

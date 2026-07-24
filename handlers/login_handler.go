@@ -54,7 +54,7 @@ func LoginHandler() *core.ResourceHandler {
 					})
 					return
 				}
-				ctx.SetCookie(gin.AuthUserKey, token.Token, 3600, "/", ctx.Request.Host, false, true)
+				app.SetAuthCookie(ctx, token.Token, 3600)
 				ctx.JSON(http.StatusOK, token)
 			},
 		},

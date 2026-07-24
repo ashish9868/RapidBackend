@@ -7,6 +7,7 @@
   import { ResourceApis, Resources } from "./api/ResourceApis";
   import SplashPage from "./pages/SplashPage.svelte";
   import { ToastsUtil } from "./utils/ToastsUtil";
+    import { Routes } from "./routes";
   let detecting = $state(true);
   let user = $state(null);
   let routes = $state([
@@ -31,22 +32,22 @@
         mode: LoginMode.SET_PASSWORD,
       },
     },
+    {
+      path: "/dashboard",
+      component: DashboardPage,
+    },
   ]);
   $effect(async () => {
     const [data] = (await ResourceApis.getPaginated(Resources.Me)).results;
     user = data;
-    if (data?.ID) {
-      routes = [
-        {
-          path: "/dashboard",
-          component: DashboardPage,
-        },
-      ];
-      console.log(routes, data?.ID);
-    }
     detecting = false;
-    !data?.ID && ToastsUtil.showError("Session Expired!", 5000);
-    goto(routes[0].path);
+    const isDashboard = window.location.pathname.startsWith(Routes.DASHBOARD.path)
+    if (!data?.ID) {
+      isDashboard && ToastsUtil.showError("Session Expired!", 5000);
+      goto(Routes.LOGIN.path);
+    } else if (!isDashboard) {
+      goto(Routes.DASHBOARD.path);
+    }
   });
 </script>
 
