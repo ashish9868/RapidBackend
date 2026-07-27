@@ -1,7 +1,8 @@
 <script>
     import { Edit, Edit2 } from "@lucide/svelte";
-    import Dialog from "./Dialog.svelte";
+    import Dialog from "./AppDialog.svelte";
     import FormInput from "./form/FormInput.svelte";
+    import AppDialog from "./AppDialog.svelte";
     let open = $state(false)
 </script>
 
@@ -16,7 +17,7 @@
         </button>
     </div>
     </div>
-    <Dialog bind:open>
+    <AppDialog bind:open>
         <FormInput />
-    </Dialog>
+    </AppDialog>
 </div>

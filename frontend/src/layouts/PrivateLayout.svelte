@@ -17,6 +17,7 @@
         LayoutDashboard,
         LogOut,
         Plus,
+        PlusCircle,
         Search,
         Settings,
         Users,
@@ -28,6 +29,7 @@
     import FormInput from "../components/form/FormInput.svelte";
     import FormSelect from "../components/form/FormSelect.svelte";
     import ProjectSelect from "../components/ProjectSelect.svelte";
+    import AppButton from "../components/AppButton.svelte";
 
     let { children } = $props();
     let projects = $state([
@@ -157,104 +159,7 @@
                     >
                         <Download class="w-4 h-4" /> Export
                     </button>
-                    <button
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors"
-                    >
-                        <Plus class="w-4 h-4" /> New Report
-                    </button>
-                </div>
-            </div>
-
-            <!-- METRIC CARDS GRID -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <!-- Card 1 -->
-                <div
-                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between"
-                >
-                    <div class="space-y-2">
-                        <span
-                            class="text-sm font-medium text-slate-500 uppercase tracking-wider"
-                            >Total Revenue</span
-                        >
-                        <h3 class="text-3xl font-bold text-slate-900">
-                            $48,259.50
-                        </h3>
-                        <span
-                            class="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full"
-                        >
-                            <ArrowUpRight class="w-3 h-3" />
-                            +12.5%
-                        </span>
-                    </div>
-                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
-                        <DollarSign class="w-5 h-5" />
-                    </div>
-                </div>
-
-                <!-- Card 2 -->
-                <div
-                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between"
-                >
-                    <div class="space-y-2">
-                        <span
-                            class="text-sm font-medium text-slate-500 uppercase tracking-wider"
-                            >Active Users</span
-                        >
-                        <h3 class="text-3xl font-bold text-slate-900">
-                            10,843
-                        </h3>
-                        <span
-                            class="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full"
-                        >
-                            <ArrowUpRight class="w-3 h-3" />
-                            +8.2%
-                        </span>
-                    </div>
-                    <div class="p-3 bg-sky-50 text-sky-600 rounded-lg">
-                        <Users class="w-5 h-5" />
-                    </div>
-                </div>
-
-                <!-- Card 3 -->
-                <div
-                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between"
-                >
-                    <div class="space-y-2">
-                        <span
-                            class="text-sm font-medium text-slate-500 uppercase tracking-wider"
-                            >Conversion Rate</span
-                        >
-                        <h3 class="text-3xl font-bold text-slate-900">2.46%</h3>
-                        <span
-                            class="inline-flex items-center gap-1 text-xs font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full"
-                        >
-                            <ArrowDownRight class="w-3 h-3" /> -1.4%
-                        </span>
-                    </div>
-                    <div class="p-3 bg-amber-50 text-amber-600 rounded-lg">
-                        <Activity class="w-5 h-5" />
-                    </div>
-                </div>
-
-                <!-- Card 4 -->
-                <div
-                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between"
-                >
-                    <div class="space-y-2">
-                        <span
-                            class="text-sm font-medium text-slate-500 uppercase tracking-wider"
-                            >Open Tickets</span
-                        >
-                        <h3 class="text-3xl font-bold text-slate-900">23</h3>
-                        <span
-                            class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full"
-                        >
-                            Static
-                        </span>
-                    </div>
-                    <div class="p-3 bg-rose-50 text-rose-600 rounded-lg">
-                        <AlertCircle class="w-5 h-5" />
-                    </div>
+                    <AppButton icon={PlusCircle} variant={'error'} >Hello</AppButton>
                 </div>
             </div>
             <!-- MAIN DATA LAYOUT -->
