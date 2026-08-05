@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/ashish9868/rapidbackend/core"
 	"github.com/ashish9868/rapidbackend/models"
@@ -43,8 +42,8 @@ func NewCreateSuperAdminCommand(app *core.App) *cobra.Command {
 				return errors.New("email is required")
 			}
 
-			exists := models.User{}
-			total, err := app.Bun.NewSelect().Model(&exists).Where("email = ? AND role = ?", email, models.RoleSuperAdmin).Count(context.Background())
+			exists := models.Superadmin{}
+			total, err := app.Bun.NewSelect().Model(&exists).Where("email = ?", email).Count(context.Background())
 
 			if err != nil {
 				return err
@@ -81,15 +80,11 @@ func NewCreateSuperAdminCommand(app *core.App) *cobra.Command {
 				return err
 			}
 
-			verifiedAt := time.Now()
-			_, err = app.Bun.NewInsert().Model(&models.User{
-				ID:              xid.New().String(),
-				FirstName:       xid.New().String(),
-				Email:           email,
-				Password:        app.BaseUtil.HashPassword(password),
-				EmailVerifiedAt: &verifiedAt,
-				IsActive:        true,
-				Role:            models.RoleSuperAdmin,
+			_, err = app.Bun.NewInsert().Model(&models.Superadmin{
+				ID:        xid.New().String(),
+				FirstName: xid.New().String(),
+				Email:     email,
+				Password:  app.BaseUtil.HashPassword(password),
 			}).Exec(context.Background())
 
 			if err != nil {

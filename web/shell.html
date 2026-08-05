@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="/assets/app.css?t=000">
+  <script src="https://unpkg.com/@shaun/alpinejs-router@1.x.x/dist/cdn.min.js" defer></script>
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+
+<body x-data x-init="$router.config({ mode: 'hash' })">
+
+  <button command="show-modal" commandfor="my-dialog">Open dialog</button>
+
+<dialog id="my-dialog">
+  <p>This dialog was opened using an invoker command.</p>
+  <button commandfor="my-dialog" command="close">Close</button>
+</dialog>
+  <template x-route="/hello/:name">
+    <!-- Inner template -->
+    <div>Say hello to <span x-text="$router.params.name"></span></div>
+  </template>
+
+  <!-- Separate template file -->
+  <template x-route="/" template="/assets/login.html"></template>
+  <template x-route.notfound template="/assets/404.html"></template>
+  </template>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="/assets/app.js?t=1.0"></script>
+</body>
+
+</html>

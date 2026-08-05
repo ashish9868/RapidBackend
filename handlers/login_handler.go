@@ -1,30 +1,32 @@
 package handlers
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/ashish9868/rapidbackend/core"
-	"github.com/ashish9868/rapidbackend/services"
 	"github.com/gin-gonic/gin"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
 type LoginForm struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" form:"email"`
+	Password string `json:"password" form:"password"`
 }
 
-func LoginHandler() *core.ResourceHandler {
+func LoginHandler(collection string) *core.ResourceHandler {
 	return &core.ResourceHandler{
 		Create: &core.ResourceAction{
 			Handler: func(ctx *gin.Context, app *core.App) {
+				view := "fragment.login"
 				var form LoginForm
 				// ShouldBind checks Content-Type to select a binding engine automatically
-				if err := ctx.ShouldBindJSON(&form); err != nil {
-					ctx.JSON(http.StatusBadRequest, gin.H{
-						"errors": err,
+				if err := app.BindSafely(ctx, &form); err != nil {
+					app.SendResponse(ctx, core.Response{
+						View:  view,
+						Code:  http.StatusBadRequest,
+						Error: err,
 					})
 					return
 				}
@@ -40,22 +42,34 @@ func LoginHandler() *core.ResourceHandler {
 				)
 
 				if err != nil {
-					ctx.JSON(http.StatusUnprocessableEntity, err)
-					return
-				}
-				authService := services.NewAuthService(app)
-				token := authService.LoginByEmail(form.Email, form.Password)
-
-				fmt.Println(token)
-
-				if token == nil {
-					ctx.JSON(http.StatusUnprocessableEntity, gin.H{
-						"global": "Unable to login, credentials are invalid.",
+					app.SendResponse(ctx, core.Response{
+						View:     view,
+						Code:     http.StatusUnprocessableEntity,
+						FormData: form,
+						Error:    err,
 					})
 					return
 				}
-				app.SetAuthCookie(ctx, token.Token, 3600)
-				ctx.JSON(http.StatusOK, token)
+				user := app.AuthService.LoginByEmail(form.Email, form.Password, collection)
+				if user == nil {
+					app.SendResponse(ctx, core.Response{
+						View:     view,
+						Code:     http.StatusUnprocessableEntity,
+						FormData: form,
+						Error:    errors.New("Unable to login, credentials are invalid."),
+					})
+					return
+				}
+				app.SetAuthCookie(ctx, *user.Token, 3600)
+				if app.IsHTMX(ctx) {
+					app.SendResponse(ctx, core.Response{
+						View: view,
+						Code: http.StatusOK,
+						Data: user,
+					})
+					return
+				}
+				ctx.JSON(http.StatusOK, user)
 			},
 		},
 	}

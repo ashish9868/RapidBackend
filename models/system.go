@@ -2,23 +2,24 @@ package models
 
 import "time"
 
-type Role string
-
 const (
-	RoleSuperAdmin   Role = "superadmin"
-	RoleProjectOwner Role = "project_owner"
-	RoleProjectUser  Role = "project_user"
-	RoleGuest        Role = "guest"
+	COLLECTION_SUPERADMINS                = "superadmins"
+	COLLECTION_USERS                      = "users"
+	COLLECTION_ACCESS_KEY_TOKENS          = "access_key_tokens"
+	COLLECTION_PROJECTS                   = "projects"
+	COLLECTION_PROJECT_COLLECTIONS        = "project_collections"
+	COLLECTION_PROJECT_PAGES              = "project_pages"
+	COLLECTION_PROJECT_COLLECTION_FIELDS  = "project_collection_fields"
+	COLLECTION_PROJECT_COLLECTION_RECORDS = "project_collection_records"
+	COLLECTION_SETTINGS                   = "settings"
 )
 
 type AccessKeyToken struct {
-	ID           string     `bun:"id,pk,notnull"`
-	UserID       string     `bun:"user_id,notnull"`
-	User         *User      `bun:"rel:belongs-to,join:user_id=id"`
-	Token        string     `bun:"access_token"`
-	RefreshToken string     `bun:"refresh_token"`
-	CreatedAt    time.Time  `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	ExpiresAt    *time.Time `bun:"expires_at,notnull"`
+	ID           string    `bun:"id,pk,notnull"`
+	CollectionID string    `bun:"collection_id,notnull"`
+	Collection   string    `bun:"collection,notnull"`
+	Token        string    `bun:"access_token"`
+	CreatedAt    time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 }
 
 type Project struct {
@@ -29,6 +30,18 @@ type Project struct {
 	Settings    map[string]any `bun:"type:json"`
 	CreatedAt   time.Time      `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 	UpdatedAt   time.Time      `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+}
+
+type Superadmin struct {
+	ID              string     `bun:"id,pk,notnull"`
+	FirstName       string     `bun:"first_name,notnull"`
+	LastName        string     `bun:"last_name"`
+	Email           string     `bun:"email,unique:unq_project_email,notnull"`
+	Password        string     `bun:"password,notnull" json:"-"`
+	EmailVerifiedAt *time.Time `bun:"email_verified_at,notnull"`
+	IsActive        bool       `bun:"is_active,default:'0'"`
+	CreatedAt       time.Time  `bun:"created_at,nullzero,notnull,default:current_timestamp"`
+	UpdatedAt       time.Time  `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
 }
 
 type User struct {
@@ -43,7 +56,6 @@ type User struct {
 	Password        string     `bun:"password,notnull" json:"-"`
 	EmailVerifiedAt *time.Time `bun:"email_verified_at,notnull"`
 	IsActive        bool       `bun:"is_active,default:'0'"`
-	Role            Role       `bun:"role,notnull,unique:unq_project_email,default:'owner'"`
 
 	Permissions map[string]any `bun:"permissions_json,type:json"`
 	CreatedAt   time.Time      `bun:"created_at,nullzero,notnull,default:current_timestamp"`

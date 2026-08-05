@@ -1,0 +1,92 @@
+{{define "fragment.login"}}
+<div id="formResponse" class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-5">
+
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="display-4 text-primary mb-2">
+                            🔒
+                        </div>
+
+                        <h3 class="mb-1">Welcome Back</h3>
+                        <p class="text-muted mb-3">
+                            Sign in to continue
+                        </p>
+
+                        {{if .errors.global}}
+                        <div class="alert alert-danger py-2">
+                            {{.errors.global}}
+                        </div>
+                        {{end}}
+                    </div>
+
+                    <form
+                        hx-post="/api/v1/login"
+                        hx-target="#formResponse"
+                        hx-swap="outerHTML">
+
+                        <!-- Email -->
+                        {{template "fragments.forms.input" (dict 
+                          "IconStart" "user"
+                          "Label" "Email Address"
+                          "Name" "email" 
+                          "Type" "email"
+                          "Placeholder" "Enter Your Email"
+                          "Error" .errors.email
+                          "Required" true
+                          "Autocomplete" "username"
+                        )}}
+
+                        <div class="mb-2" ></div>
+
+                        <!-- Password -->
+                       {{template "fragments.forms.input" merge (dict 
+                          "IconStart" "key"
+                          "Label" "Password"
+                          "Name" "password" 
+                          "Type" "password"
+                          "Placeholder" "Enter Your Password"
+                          "Error" .errors.password
+                          "Required" true
+                          "Autocomplete" "new-password"
+                        )}}
+
+                        <!-- Remember + Forgot -->
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+
+                            <div class="form-check">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    id="remember">
+
+                                <label class="form-check-label" for="remember">
+                                    Remember me
+                                </label>
+                            </div>
+
+                            <a href="#/forgot-password">
+                                Forgot password?
+                            </a>
+
+                        </div>
+
+                        <div class="d-grid">
+                            <button
+                                type="submit"
+                                class="btn btn-primary">
+                                Sign In
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{{end}}

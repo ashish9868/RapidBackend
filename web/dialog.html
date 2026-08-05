@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Materialize Modals</title>
+
+  <!-- Materialize CSS & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="grey darken-4 white-text valign-wrapper" style="min-height: 100vh;">
+
+  <div class="container center-align">
+    <h4 class="white-text">Materialize Dialog Showcase</h4>
+    <p class="grey-text">Interactive dialogs using official Materialize Modal classes</p>
+
+    <!-- Triggers -->
+    <a class="waves-effect waves-light btn-large modal-trigger indigo accent-2" href="#formModal">
+      <i class="material-icons left">add</i>Create Secret Key
+    </a>
+
+    <a class="waves-effect waves-light btn-large modal-trigger red darken-2" href="#confirmModal">
+      <i class="material-icons left">delete</i>Delete Database
+    </a>
+  </div>
+
+  <!-- 1. Form Dialog Modal -->
+  <div id="formModal" class="modal grey darken-3 white-text">
+    <div class="modal-content">
+      <h4 class="indigo-text text-accent-2">Create New Secret Key</h4>
+      <p class="grey-text text-lighten-1">API keys grant access to your account data. Treat them like passwords.</p>
+      
+      <form>
+        <div class="row">
+          <div class="input-field col s12">
+            <input id="key_name" type="text" class="validate white-text">
+            <label for="key_name">Key Identifier</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="input-field col s12">
+            <select class="white-text">
+              <option value="30" selected>30 Days</option>
+              <option value="90">90 Days</option>
+              <option value="365">1 Year</option>
+            </select>
+            <label>Expiration Period</label>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer grey darken-4">
+      <a href="#!" class="modal-close waves-effect waves-green btn-flat grey-text">Cancel</a>
+      <a href="#!" class="modal-close waves-effect waves-light btn indigo accent-2">Generate Key</a>
+    </div>
+  </div>
+
+  <!-- 2. Danger Confirmation Dialog Modal -->
+  <div id="confirmModal" class="modal grey darken-3 white-text">
+    <div class="modal-content">
+      <h4 class="red-text text-accent-2"><i class="material-icons left">warning</i>Delete Database Cluster</h4>
+      <p class="grey-text text-lighten-1">Are you sure you want to delete <strong>prod-db-primary-01</strong>?</p>
+      <p class="red-text text-lighten-3">This action is permanent and cannot be undone.</p>
+    </div>
+    
+    <div class="modal-footer grey darken-4">
+      <a href="#!" class="modal-close waves-effect waves-green btn-flat grey-text">Cancel</a>
+      <a href="#!" class="modal-close waves-effect waves-light btn red darken-2">Permanently Delete</a>
+    </div>
+  </div>
+
+  <!-- Materialize JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Modal Initialization
+      var modalElems = document.querySelectorAll('.modal');
+      M.Modal.init(modalElems);
+
+      // Select Initialization
+      var selectElems = document.querySelectorAll('select');
+      M.FormSelect.init(selectElems);
+    });
+  </script>
+</body>
+</html>

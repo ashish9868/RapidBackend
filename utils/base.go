@@ -14,11 +14,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"unicode"
 
 	"github.com/ashish9868/rapidbackend/dto"
-	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/inflection"
 	"github.com/rs/xid"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mail.v2"
@@ -220,9 +221,6 @@ func (b *BaseUtil) FileExists(embed fs.FS, path string) bool {
 }
 
 func (b *BaseUtil) PrintFiles(embed fs.FS) error {
-	if gin.Mode() == gin.ReleaseMode {
-		return nil
-	}
 	// Walk the root directory "." to visit every file and folder
 	err := fs.WalkDir(embed, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -253,4 +251,106 @@ func (b *BaseUtil) SubFs(embed fs.FS, path string) *fs.FS {
 	}
 	println("Error reading sub fs :", err.Error())
 	return nil
+}
+
+func (b *BaseUtil) SafeGet(row map[string]any, key string, defaultVal any) any {
+	if row == nil {
+		return defaultVal
+	}
+	if val, ok := row[key]; ok && val != nil {
+		return val
+	}
+	return defaultVal
+}
+
+func (b *BaseUtil) Dict(values ...interface{}) (map[string]interface{}, error) {
+	if len(values)%2 != 0 {
+		return nil, errors.New("invalid dict call: must have even number of arguments")
+	}
+	dict := make(map[string]interface{}, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, errors.New("dict keys must be strings")
+		}
+		dict[key] = values[i+1]
+	}
+	return dict, nil
+}
+
+func (b *BaseUtil) Merge(base interface{}, values ...interface{}) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+
+	rv := reflect.ValueOf(base)
+	if rv.Kind() == reflect.Struct {
+		rt := rv.Type()
+		for i := 0; i < rv.NumField(); i++ {
+			field := rt.Field(i)
+			if field.PkgPath != "" {
+				continue // unexported
+			}
+			out[field.Name] = rv.Field(i).Interface()
+		}
+	} else if m, ok := base.(map[string]interface{}); ok {
+		for k, v := range m {
+			out[k] = v
+		}
+	} else {
+		out["Data"] = base
+	}
+
+	for i := 0; i < len(values); i += 2 {
+		k := values[i].(string)
+		out[k] = values[i+1]
+	}
+
+	return out, nil
+}
+
+func (b *BaseUtil) Coalesce(vals ...interface{}) interface{} {
+	for _, v := range vals {
+		if b.IsTruthy(v) {
+			return v
+		}
+	}
+	return nil
+}
+
+func (b *BaseUtil) IsTruthy(v interface{}) bool {
+	if v == nil {
+		return false
+	}
+
+	switch val := v.(type) {
+	case string:
+		return val != ""
+	case bool:
+		return val
+	case int:
+		return val != 0
+	case int8, int16, int32, int64:
+		return reflect.ValueOf(v).Int() != 0
+	case uint, uint8, uint16, uint32, uint64:
+		return reflect.ValueOf(v).Uint() != 0
+	case float32, float64:
+		return reflect.ValueOf(v).Float() != 0
+	case []interface{}:
+		return len(val) > 0
+	case []string:
+		return len(val) > 0
+	default:
+		rv := reflect.ValueOf(v)
+		switch rv.Kind() {
+		case reflect.Slice, reflect.Array, reflect.Map:
+			return rv.Len() > 0
+		case reflect.Ptr, reflect.Interface:
+			return !rv.IsNil()
+		}
+	}
+
+	return true
+}
+
+func (b *BaseUtil) Singular(plural string) string {
+	return inflection.Singular(plural)
 }

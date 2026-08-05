@@ -13,9 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ashish9868/rapidbackend/core/services"
 	"github.com/ashish9868/rapidbackend/models"
 	"github.com/ashish9868/rapidbackend/utils"
 	"github.com/gin-gonic/gin"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joho/godotenv"
 	"github.com/rs/xid"
 	"github.com/uptrace/bun"
@@ -25,11 +27,13 @@ import (
 )
 
 type App struct {
-	Bun      *bun.DB
-	BaseUtil *utils.BaseUtil
-	Gin      *gin.Engine
-	FeFs     *fs.FS
-	Version  *string
+	Bun         *bun.DB
+	BaseUtil    *utils.BaseUtil
+	Gin         *gin.Engine
+	FeFs        *fs.FS
+	Version     *string
+	AuthService *services.AuthService
+	Repository  *Repository
 }
 
 type ResourceAction struct {
@@ -104,8 +108,7 @@ func NewApp(embed embed.FS) *App {
 	)
 	gin.SetMode(baseUtil.SafeEnvGet("GIN_MODE", gin.DebugMode))
 	engine := gin.Default()
-
-	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, FeFs: baseUtil.SubFs(embed, "frontend/dist")}
+	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, FeFs: baseUtil.SubFs(embed, "web"), AuthService: services.NewAuthService(db, *baseUtil), Repository: NewRepository(db)}
 	app.InitializeSystem()
 	fmt.Printf("APP will start on PORT: %s\n\n", baseUtil.SafeEnvGet("PORT", strconv.Itoa(utils.DEFAULT_PORT)))
 	return app
@@ -119,9 +122,16 @@ func (app *App) ResourceRoutes(name string, group *gin.RouterGroup, handler Reso
 			handler.Index.Handler(ctx, app)
 		})
 	}
+	id_segment := ""
+	parts := strings.Split(base, "/")
+	if len(parts) > 0 {
+		id_segment = app.BaseUtil.Singular(parts[len(parts)-1])
+	}
+
+	id_segment = id_segment + "_id"
 	if handler.Show != nil {
 		group.Use(append(middlewares, handler.Show.Middlewares...)...)
-		group.GET(base+"/:id", func(ctx *gin.Context) {
+		group.GET(base+id_segment, func(ctx *gin.Context) {
 			handler.Show.Handler(ctx, app)
 		})
 	}
@@ -135,17 +145,17 @@ func (app *App) ResourceRoutes(name string, group *gin.RouterGroup, handler Reso
 
 	if handler.Update != nil {
 		group.Use(append(middlewares, handler.Update.Middlewares...)...)
-		group.PUT(base+"/:id", func(ctx *gin.Context) {
+		group.PUT(base+id_segment, func(ctx *gin.Context) {
 			handler.Update.Handler(ctx, app)
 		})
-		group.PATCH(base+"/:id", func(ctx *gin.Context) {
+		group.PATCH(base+id_segment, func(ctx *gin.Context) {
 			handler.Update.Handler(ctx, app)
 		})
 	}
 
 	if handler.Delete != nil {
 		group.Use(append(middlewares, handler.Delete.Middlewares...)...)
-		group.GET(base+"/:id", func(ctx *gin.Context) {
+		group.DELETE(base+id_segment, func(ctx *gin.Context) {
 			handler.Delete.Handler(ctx, app)
 		})
 	}
@@ -175,6 +185,7 @@ func (app *App) WithTransaction(ctx context.Context, db *bun.DB, fn func(tx bun.
 
 func (app *App) InitializeSystem() {
 	app.Bun.NewCreateTable().Model((*models.Project)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
+	app.Bun.NewCreateTable().Model((*models.Superadmin)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.User)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.AccessKeyToken)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.ProjectPage)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
@@ -193,13 +204,13 @@ func (app *App) InitializeSystem() {
 		Password:        app.BaseUtil.HashPassword("Asdf1234@#$"),
 		IsActive:        true,
 		EmailVerifiedAt: &t,
-		Role:            models.RoleSuperAdmin,
 	}).Exec(context.Background())
 }
 
 func (app *App) ServeStatic() {
 	if app.FeFs != nil {
 		staticSub := app.BaseUtil.SubFs(*app.FeFs, "assets")
+		app.BaseUtil.PrintFiles(*staticSub)
 		if staticSub != nil {
 			app.Gin.StaticFS("/assets", http.FS(*staticSub))
 		}
@@ -212,15 +223,20 @@ func (app *App) ServeNoRoute() {
 			ctx.Status(http.StatusNotFound)
 			return
 		}
-		app.BaseUtil.PrintFiles(*app.FeFs)
-		path := "index.html"
+		path := strings.Trim(ctx.Request.URL.Path, "/")
+		if len(path) < 1 {
+			path = "shell.html"
+		}
+		if !app.BaseUtil.FileExists(*app.FeFs, path) {
+			path = "404.html"
+		}
 		if !app.BaseUtil.FileExists(*app.FeFs, path) {
 			ctx.Status(http.StatusNotFound)
 			return
 		}
-		http.ServeFileFS(ctx.Writer, ctx.Request, *app.FeFs, path)
+		ctx.FileFromFS(path, http.FS(*app.FeFs))
 	}
-	app.Gin.NoRoute(handler)
+	app.Gin.NoRoute(app.NewAuthMiddleWare(false, true), handler)
 }
 
 func (app *App) ErrorJson(body any, err error) gin.H {
@@ -234,10 +250,7 @@ func (app *App) SetAuthCookie(ctx *gin.Context, value string, maxAge int) {
 	if maxAge < 60 {
 		token, _ := ctx.Cookie(gin.AuthUserKey)
 		if len(token) > 0 {
-			expiry := time.Now().Add(-1 * time.Hour)
-			app.Bun.NewDelete().Model(&models.AccessKeyToken{
-				ExpiresAt: &expiry,
-			}).Where("access_token = ?", token).Exec(context.Background())
+			app.Bun.NewDelete().Model(&models.AccessKeyToken{}).Where("access_token = ?", token).Exec(context.Background())
 		}
 	}
 	ctx.SetCookie(gin.AuthUserKey, value, maxAge, "/", ctx.Request.Host, false, true)
@@ -246,9 +259,123 @@ func (app *App) SetAuthCookie(ctx *gin.Context, value string, maxAge int) {
 func (app *App) HttpUnauthorized(ctx *gin.Context) {
 	val, _ := ctx.Cookie(gin.AuthUserKey)
 	app.SetAuthCookie(ctx, "", -1)
-	ctx.JSON(http.StatusUnauthorized, gin.H{
-		"Uauthorized": true,
-		"Redirect":    len(val) > 0,
-	})
+	if app.IsHTMX(ctx) {
+		ctx.Header("HX-Redirect", "/#/")
+		ctx.Status(http.StatusUnauthorized)
+	} else {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"Uauthorized": true,
+			"Redirect":    len(val) > 0,
+		})
+	}
 	ctx.Abort()
+	return
+}
+
+func (app *App) IsHTMX(ctx *gin.Context) bool {
+	return ctx.GetHeader("HX-Request") == "true"
+}
+
+func (app *App) NewAuthMiddleWare(throw401 bool, silent bool) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		token, err := ctx.Cookie(gin.AuthUserKey)
+		if err != nil {
+			token = ctx.GetHeader("Authorization")
+			if !strings.HasPrefix(token, "Bearer ") && !silent {
+				app.HttpUnauthorized(ctx)
+				return
+			}
+			token = strings.TrimPrefix(token, "Bearer ")
+			if len(token) < 1 && !silent {
+				app.HttpUnauthorized(ctx)
+				return
+			}
+		}
+
+		user := app.AuthService.GetUserByToken(token)
+		if user != nil {
+			ctx.Set(gin.AuthUserKey, user)
+		}
+		if user == nil && throw401 && !silent {
+			app.HttpUnauthorized(ctx)
+			return
+		}
+		ctx.Next()
+	}
+
+}
+
+func (app *App) NewPublicMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		_, exists := ctx.Get(gin.AuthUserKey)
+		if !exists {
+			ctx.Next()
+			return
+		}
+		ctx.Header("HX-Redirect", "/#/dashboard")
+		ctx.Status(http.StatusTemporaryRedirect)
+		ctx.Abort()
+	}
+}
+
+func (app *App) BindSafely(ctx *gin.Context, obj any) error {
+	switch ctx.ContentType() {
+	case "application/json":
+		return ctx.ShouldBindJSON(obj)
+	default:
+		return ctx.ShouldBind(obj)
+	}
+}
+
+type Response struct {
+	Code       int
+	View       string
+	Data       any
+	Error      error
+	HxRedirect string
+	FormData   any
+}
+
+func (app *App) SendResponse(ctx *gin.Context, response Response) {
+	app.BaseUtil.PrintFiles(*app.FeFs)
+	formData := response.FormData
+	if formData == nil {
+		formData = map[string]any{}
+	}
+	templateData := gin.H{
+		"data":   response.Data,
+		"errors": app.FormatErrors(response.Error),
+		"code":   response.Code,
+		"form":   formData,
+	}
+	if app.IsHTMX(ctx) {
+		if len(response.HxRedirect) > 0 {
+			ctx.Header("HX-Redirect", response.HxRedirect)
+			ctx.Status(http.StatusTemporaryRedirect)
+			return
+		} else {
+			ctx.HTML(200, response.View, templateData)
+			return
+		}
+	} else {
+		ctx.JSON(response.Code, templateData)
+	}
+	ctx.Abort()
+}
+
+func (app *App) FormatErrors(err error) map[string]any {
+	result := make(map[string]any)
+
+	if errs, ok := err.(validation.Errors); ok {
+		for field, e := range errs {
+			if e != nil {
+				result[field] = e.Error()
+			}
+		}
+		return result
+	}
+
+	result["global"] = err.Error()
+	return result
+
 }
