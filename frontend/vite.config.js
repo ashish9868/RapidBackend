@@ -1,15 +1,8 @@
-// vite.config.js
-import { defineConfig } from "vite";
-import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { defineConfig } from 'vite'
+import preact from '@preact/preset-vite'
 import tailwindcss from "@tailwindcss/vite";
 
+// https://vite.dev/config/
 export default defineConfig({
-  build:{
-    outDir: "./dist",
-    emptyOutDir: true,
-  },
-  plugins: [
-    tailwindcss(),
-    svelte(),
-  ],
-});
+  plugins: [tailwindcss(), preact()],
+})

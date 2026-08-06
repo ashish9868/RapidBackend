@@ -48,6 +48,15 @@ type ResourceHandler struct {
 	Delete *ResourceAction
 }
 
+func NoCacheMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+		c.Header("Pragma", "no-cache")
+		c.Header("Expires", time.Unix(0, 0).Format(http.TimeFormat)) // Thu, 01 Jan 1970 00:00:00 GMT
+		c.Next()
+	}
+}
+
 func NewApp(embed embed.FS) *App {
 
 	baseUtil := utils.NewBaseUtil()
@@ -108,6 +117,7 @@ func NewApp(embed embed.FS) *App {
 	)
 	gin.SetMode(baseUtil.SafeEnvGet("GIN_MODE", gin.DebugMode))
 	engine := gin.Default()
+	engine.Use(NoCacheMiddleware())
 	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, FeFs: baseUtil.SubFs(embed, "web"), AuthService: services.NewAuthService(db, *baseUtil), Repository: NewRepository(db)}
 	app.InitializeSystem()
 	fmt.Printf("APP will start on PORT: %s\n\n", baseUtil.SafeEnvGet("PORT", strconv.Itoa(utils.DEFAULT_PORT)))
@@ -210,7 +220,6 @@ func (app *App) InitializeSystem() {
 func (app *App) ServeStatic() {
 	if app.FeFs != nil {
 		staticSub := app.BaseUtil.SubFs(*app.FeFs, "assets")
-		app.BaseUtil.PrintFiles(*staticSub)
 		if staticSub != nil {
 			app.Gin.StaticFS("/assets", http.FS(*staticSub))
 		}
@@ -219,22 +228,17 @@ func (app *App) ServeStatic() {
 
 func (app *App) ServeNoRoute() {
 	handler := func(ctx *gin.Context) {
+		app.BaseUtil.PrintFiles(*app.FeFs)
 		if app.FeFs == nil {
 			ctx.Status(http.StatusNotFound)
 			return
 		}
-		path := strings.Trim(ctx.Request.URL.Path, "/")
-		if len(path) < 1 {
-			path = "shell.html"
-		}
-		if !app.BaseUtil.FileExists(*app.FeFs, path) {
-			path = "404.html"
-		}
+		path := "index.html"
 		if !app.BaseUtil.FileExists(*app.FeFs, path) {
 			ctx.Status(http.StatusNotFound)
 			return
 		}
-		ctx.FileFromFS(path, http.FS(*app.FeFs))
+		http.ServeFileFS(ctx.Writer, ctx.Request, *app.FeFs, path)
 	}
 	app.Gin.NoRoute(app.NewAuthMiddleWare(false, true), handler)
 }

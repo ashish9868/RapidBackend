@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  /* Semantic colors */
+  --color-primary: #000000;      /* sky-500 */
+  --color-success: #22c55e;      /* green-500 */
+  --color-warning: #f59e0b;      /* amber-500 */
+  --color-danger: #ef4444;       /* red-500 */
+}
+
+.tox-tinymce{
+    width: 100% !important;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator, input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    /* -webkit-box-shadow: 0 0 0px 1000px white inset !important; */
+    -webkit-text-fill-color: #fff !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Hide scrollbar but keep scrolling */
+.hide-scroll {
+    -ms-overflow-style: none;  /* IE/Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+
+.hide-scroll::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari */
+}
