@@ -6,6 +6,7 @@ import Logo from './assets/logo.svg'
 import { useRef } from 'react';
 import AppFileInput from './components/forms/AppFileInput';
 import { AppSelect } from './components/forms/AppSelect';
+import { MultiSelect } from './components/forms/MultiSelect';
 export function App() {
   const ref = useRef(null)
   const [count, setCount] = useState(0)
@@ -39,7 +40,7 @@ export function App() {
           {label: 'Option E', value: 'E'},
         ]} />
         <AppButton color='zinc' type='submit' endIcon={<ArrowRight />}>Login</AppButton>
-        
+        <MultiSelect />
       </form>
     </div>
   )

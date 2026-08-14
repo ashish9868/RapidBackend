@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/ashish9868/rapidbackend/core"
 	"github.com/ashish9868/rapidbackend/handlers"
+	"github.com/ashish9868/rapidbackend/templates/pages"
 	"github.com/ashish9868/rapidbackend/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
@@ -32,6 +34,10 @@ func NewServeCommand(app *core.App) *cobra.Command {
 			app.ResourceRoutes("collections/:collection_id/fields", api_base_group, *handlers.NewFieldsHandler(), authMiddleware)
 			app.ResourceRoutes("collections/:collection_id/records", api_base_group, *handlers.NewRecordsHandler(), authMiddleware)
 			app.ResourceRoutes("users", api_base_group, *handlers.NewUsersHandler(), authMiddleware)
+
+			app.Gin.GET("/", func(ctx *gin.Context) {
+				pages.LoginPage().Render(context.Background(), ctx.Writer)
+			})
 
 			app.ServeStatic()
 			app.ServeNoRoute()

@@ -18,6 +18,7 @@ require (
 )
 
 require (
+	github.com/a-h/templ v0.3.1020 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect

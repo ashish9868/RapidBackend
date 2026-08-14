@@ -1,0 +1,94 @@
+package layouts
+
+templ MainLayout() {
+<!-- Production version -->
+<html>
+<head>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="//unpkg.com/alpinejs" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
+    integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
+    crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style type="text/tailwindcss">
+@theme {
+  /* Semantic colors */
+  --color-primary: #000000;      /* sky-500 */
+  --color-success: #22c55e;      /* green-500 */
+  --color-warning: #f59e0b;      /* amber-500 */
+  --color-danger: #ef4444;       /* red-500 */
+}
+
+.tox-tinymce{
+    width: 100% !important;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator, input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    /* -webkit-box-shadow: 0 0 0px 1000px white inset !important; */
+    -webkit-text-fill-color: #fff !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Hide scrollbar but keep scrolling */
+.hide-scroll {
+    -ms-overflow-style: none;  /* IE/Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+
+.hide-scroll::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari */
+}
+</style>
+</head>
+<body class="bg-[#1c1c1c]">
+<div class="flex w-full max-w-lg justify-self-center items-center self-center min-h-screen">
+    <form class="flex w-full flex-col gap-8 px-4 pb-16 items-center items-center">
+        <div class="text-white font-bold flex flex-col text-center items-center">
+          <img width={100} src={"/static/logo.svg"} alt='Rapid Backend' />
+          <p>Superadmin Login</p>
+        </div>
+
+        { children... }
+    </form>
+</div>
+</body>
+</html>
+}
+
+
+templ RunJs() {
+    <script>
+            lucide.createIcons();
+            document.addEventListener("DOMContentLoaded", () => {
+                document.querySelectorAll("[data-flatpickr]:not([data-flatpickr-initialized])")
+                    .forEach((el) => {
+                        const altFormat = el.getAttribute('data-altFormat')
+                        const dateFormat = el.getAttribute('data-dateFormat')
+                        flatpickr(el, {
+                            altInput: true,
+                            time_24hr: true,
+                            allowInput: true,
+                            altFormat: altFormat ?? "m/d/Y",
+                            dateFormat: dateFormat ?? "Y-m-d",
+                            enableTime: `${dateFormat}`.includes('H') ? true: false,
+                            noCalendar: `${dateFormat}`.includes('Y') ? false: true,
+                        });
+                        el.dataset.flatpickrInitialized = "true";
+                    });
+            });
+    </script>
+}
+
+
+templ Footer() {
+    
+}

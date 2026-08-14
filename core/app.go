@@ -118,7 +118,7 @@ func NewApp(embed embed.FS) *App {
 	gin.SetMode(baseUtil.SafeEnvGet("GIN_MODE", gin.DebugMode))
 	engine := gin.Default()
 	engine.Use(NoCacheMiddleware())
-	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, FeFs: baseUtil.SubFs(embed, "web"), AuthService: services.NewAuthService(db, *baseUtil), Repository: NewRepository(db)}
+	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, FeFs: baseUtil.SubFs(embed, "static"), AuthService: services.NewAuthService(db, *baseUtil), Repository: NewRepository(db)}
 	app.InitializeSystem()
 	fmt.Printf("APP will start on PORT: %s\n\n", baseUtil.SafeEnvGet("PORT", strconv.Itoa(utils.DEFAULT_PORT)))
 	return app
@@ -219,28 +219,14 @@ func (app *App) InitializeSystem() {
 
 func (app *App) ServeStatic() {
 	if app.FeFs != nil {
-		staticSub := app.BaseUtil.SubFs(*app.FeFs, "assets")
-		if staticSub != nil {
-			app.Gin.StaticFS("/assets", http.FS(*staticSub))
-		}
+		app.Gin.StaticFS("/static", http.FS(*app.FeFs))
 	}
 }
 
 func (app *App) ServeNoRoute() {
-	handler := func(ctx *gin.Context) {
-		app.BaseUtil.PrintFiles(*app.FeFs)
-		if app.FeFs == nil {
-			ctx.Status(http.StatusNotFound)
-			return
-		}
-		path := "index.html"
-		if !app.BaseUtil.FileExists(*app.FeFs, path) {
-			ctx.Status(http.StatusNotFound)
-			return
-		}
-		http.ServeFileFS(ctx.Writer, ctx.Request, *app.FeFs, path)
-	}
-	app.Gin.NoRoute(app.NewAuthMiddleWare(false, true), handler)
+	app.Gin.NoRoute(app.NewAuthMiddleWare(false, true), func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusPermanentRedirect, "/")
+	})
 }
 
 func (app *App) ErrorJson(body any, err error) gin.H {

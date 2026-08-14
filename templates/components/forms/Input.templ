@@ -1,0 +1,113 @@
+package forms
+
+
+
+type InputProps struct{
+    Label string
+    Type string
+    Name string
+    Placeholder string
+    Value any
+    Required bool
+    LabelIcon string
+    IconBefore string
+    IconAfter string
+    Error string
+    HelperText string
+}
+
+type DateProps struct{
+    InputProps
+    DateFormat string
+    DisplayFormat string
+}
+
+const (
+    DATE_FORMAT = "Y-m-d"
+    TIME_FORMAT = "H:i:S"
+    DATETIME_FORMAT = "Y-m-d H:i:S"
+    DISPLAY_DATE_FORMAT = "m/d/Y"
+    DISPLAY_TIME_FORMAT = "H:i"
+    DISPLAY_DATETIME_FORMAT = "m/d/Y H:i"
+)
+
+func (props *InputProps) BuildPlaceHolder () string {
+    if len(props.Placeholder) < 1{
+        return props.Placeholder
+    }else {
+        return "Enter "+ props.Label
+    }
+}
+
+templ InputBase(props InputProps) {
+    <div class="flex flex-col bg-primary/50 hover:bg-primary/60 gap-y-1 px-4 py-2 rounded-lg w-full">
+        <label class="flex items-center gap-1 text-white font-bold text-xs pt-1" for={"input_"+props.Name}>
+            <i width="12" data-lucide={props.LabelIcon}></i>
+            {props.Label}
+            if props.Required{
+                <i class="text-red-500 font-bold">*</i>
+            }
+        </label>
+        {children...}
+        if len(props.Error) > 0{
+            <p class="text-[0.65rem] text-red-400">{props.Error}</p>
+        }
+        else if len(props.HelperText) > 0{
+            <small class="text-[0.65rem] text-gray-50">{props.HelperText}</small>
+        }
+    </div>
+}
+
+templ Input(props InputProps) {
+    @InputBase(props) {
+        <div class="flex justify-between py-1 relative">
+            if len(props.IconBefore) > 0{
+                <i data-lucide={props.IconBefore}></i>
+            }
+            <input type={props.Type} autoComplete={props.Name} placeholder={props.BuildPlaceHolder()}  class="w-full outline-none focus-none text-white text-xs py-1" id={"input_"+props.Name} name={props.Name}/>
+            if len(props.IconAfter) > 0{
+                <i data-lucide={props.IconAfter}></i>
+            }
+        </div>
+    }
+}
+
+templ DateTime(props DateProps) {
+    @InputBase(props.InputProps) {
+        <div class="flex justify-between py-1 relative">
+            if len(props.IconBefore) > 0{
+                <i data-lucide={props.IconBefore}></i>
+            }
+            <input 
+                data-flatpickr 
+                data-altFormat={props.DisplayFormat} 
+                data-dateFormat={props.DateFormat}
+                type={"text"} autoComplete={props.Name} placeholder={props.BuildPlaceHolder()}  class="w-full outline-none focus-none text-white text-xs py-1" id={"input_"+props.Name} name={props.Name}/>
+            if len(props.IconAfter) > 0{
+                <i data-lucide={props.IconAfter}></i>
+            }
+        </div>
+    }
+}
+
+templ Password(props InputProps, showConfirm bool) {
+    @InputBase(props) {
+        <div x-data="{show:false}" class="flex items-center justify-between py-1">
+            if len(props.IconBefore) > 0{
+                <i data-lucide={props.IconBefore}></i>
+            }
+            <input x-bind:type="show ? 'text':'password'" autoComplete={props.Name} placeholder={props.BuildPlaceHolder()}  class="w-full outline-none focus-none text-white text-xs py-1" id={"input_"+props.Name} name={props.Name}/>
+            if len(props.IconAfter) > 0{
+                <i data-lucide={props.IconAfter}></i>
+            }
+            <button @click="show = !show" type="button" class="text-white cursor-pointer right-0">
+                <i width="12" x-show="!show" data-lucide="eye"></i>
+                <i width="12" x-show="show" data-lucide="eye-off"></i>
+            </button>
+        </div>
+    }
+    if showConfirm {
+        @Password(InputProps{Name: "confirm_" + props.Name, Label: "Confirm Password", Required: true, Placeholder: "Confirm Password Again"}, false)
+    }
+
+}

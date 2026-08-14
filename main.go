@@ -11,8 +11,8 @@ var (
 	VERSION = "v0.0.1-prod"
 )
 
-//go:embed web/*
-//go:embed web/**/*
+//go:embed static/**
+//go:embed static/*
 var embeddedFiles embed.FS
 
 func main() {

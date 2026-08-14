@@ -1,0 +1,14 @@
+package pages
+
+import "github.com/ashish9868/rapidbackend/templates/layouts"
+import "github.com/ashish9868/rapidbackend/templates/components/forms"
+
+templ LoginPage() {
+    @layouts.MainLayout() {
+        @forms.Input(forms.InputProps{Name: "name", Label: "Name", LabelIcon: "user", Type: "text", Placeholder: "Enter Name", Error: "Name field is required", HelperText: "Enter Your Name for registration"})
+        @forms.Input(forms.InputProps{Name: "email", Label: "Name", LabelIcon: "mail", Type: "email", Placeholder: "Enter Name", })
+        @forms.DateTime(forms.DateProps{InputProps: forms.InputProps{Name: "dob", Label: "DOB", LabelIcon: "calendar", Placeholder: "Enter Date",}, DateFormat: forms.TIME_FORMAT, DisplayFormat: forms.TIME_FORMAT })
+        @forms.Password(forms.InputProps{Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Password"}, true)
+        @layouts.RunJs()
+    }
+}
