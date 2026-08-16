@@ -1,0 +1,25 @@
+package forms
+
+templ InputBase(props InputBaseProps) {
+	<div class="flex flex-col bg-primary/50 hover:bg-primary/60 gap-y-1 px-4 py-2 rounded-lg">
+		<label class="flex text-white font-bold text-xs pt-1">
+			<div class="flex flex-col gap-2 w-full">
+				<span class="flex gap-2 items-center">
+					@Icon(props.LabelIcon)
+					{ props.Label }
+					if props.Required {
+						<i class="text-red-500 font-bold">*</i>
+					}
+				</span>
+				<div class="w-full">
+					{ children... }
+				</div>
+			</div>
+		</label>
+		if len(props.Error) > 0 {
+			<p class="text-[0.65rem] text-red-400">{ props.Error }</p>
+		} else if len(props.HelperText) > 0 {
+			<small class="text-[0.65rem] text-gray-50">{ props.HelperText }</small>
+		}
+	</div>
+}

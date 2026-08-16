@@ -1,0 +1,11 @@
+package forms
+
+templ Form(attrs ...Attr) {
+	<form
+		{ AppendAttrs(attrs, []Attr{
+        {Name: "class", Value: "flex flex-col gap-3 w-full"},
+        {Name: "autocomplete", Value: "off"},
+    }...)... }
+	>{ children... }
+</form>
+}

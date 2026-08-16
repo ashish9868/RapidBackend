@@ -1,0 +1,31 @@
+package forms
+
+templ FileInput(props InputBaseProps) {
+	@InputBase(props) {
+		<div class="flex flex-col">
+			<div class="cursor-pointer border-white border-dotted border-2 rounded-lg bg-surface px-2 my-2 py-4  text-center hover:border-gray-400 flex flex-col relative">
+				<input
+					{ props.MakeAttrs(Attr{
+                        Name: "class", Value: "w-full h-full top-0 absolute opacity-0",
+                    })... }
+					@change="files = [...$event.target.files].slice(0, $event.target.dataset.max); $event.target.value = '';"
+				/>
+				<small class="text-white text-[0.65rem] text-center">Maximum $max files are allowed.</small>
+			</div>
+			<div class="flex items-center gap-3 rounded-lg bg-surface p-2">
+				<div class="flex h-16 w-16 items-center justify-center rounded bg-surface-hover text-3xl">
+					📄
+				</div>
+				<div class="flex-1 overflow-hidden">
+					<div x-text="file.name" class="truncate text-sm text-white"></div>
+					<div class="text-xs text-white" x-text="file.size"></div>
+				</div>
+				<button type="button" @click="files.splice(index, 1)" class="rounded-full p-2 bg-red-500 hover:bg-red-600 text-white cursor-pointer flex align-center items-center text-[1.2rem] text-center">
+					@Icon("x", Attr{
+						Name: "class", Value: "text-xs text-center",
+					})
+				</button>
+			</div>
+		</div>
+	}
+}

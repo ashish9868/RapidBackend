@@ -1,0 +1,172 @@
+package forms
+
+import "fmt"
+
+templ Select(props InputBaseProps) {
+	<div
+		class="relative w-full flex flex-col bg-primary/50 hover:bg-primary/60 gap-y-1 px-4 py-2 rounded-lg w-full"
+		data-signals={ fmt.Sprintf(`{"_%s_open":false,"_%s_selected":%s}`, props.Name, props.Name, props.Selected) }
+		data-on:click__outside={ fmt.Sprintf("$_%s_open = false", props.Name) }
+	>
+		<!-- Selected chips -->
+		<label class="flex text-white font-bold text-xs pt-1" for={ fmt.Sprintf("select_id_%s", props.Name) }>
+			<div class="flex flex-col gap-2 w-full">
+				<span class="flex gap-2 items-center">
+					@Icon(props.LabelIcon)
+					{ props.Label }
+					if props.Required {
+						<i class="text-red-500 font-bold">*</i>
+					}
+				</span>
+			</div>
+		</label>
+		<div
+			class="flex min-h-14 w-full flex-wrap items-center gap-2 rounded-lg p-2"
+			data-on:click={ fmt.Sprintf(
+				"evt.stopPropagation(); $_%s_open = !$_%s_open",
+				props.Name,
+				props.Name,
+			) }
+		>
+			for _, option := range props.Options {
+				<div
+					data-class:rounded-full={ fmt.Sprintf("$_%s_selected.length > 1", props.Name) }
+					data-class:border={ fmt.Sprintf("$_%s_selected.length > 1", props.Name) }
+					data-class:border-neutral-600={ fmt.Sprintf("$_%s_selected.length > 1", props.Name) }
+					data-class:px-2={ fmt.Sprintf("$_%s_selected.length > 1", props.Name) }
+					data-class:py-2={ fmt.Sprintf("$_%s_selected.length > 1", props.Name) }
+					class="flex w-auto items-center gap-2 text-sm text-white"
+					style="display: none"
+					data-show={ fmt.Sprintf(
+						"$_%s_selected.includes('%s')",
+						props.Name,
+						option.Value,
+					) }
+				>
+					<span>{ option.Label }</span>
+					if props.Multiple {
+						<button
+							type="button"
+							class="flex cursor-pointer items-center justify-center rounded-full text-white hover:text-red-700"
+							data-on:click={ fmt.Sprintf(
+								"evt.stopPropagation(); $_%s_selected = $_%s_selected.filter(x => x !== '%s')",
+								props.Name,
+								props.Name,
+								option.Value,
+							) }
+						>
+							×
+						</button>
+					}
+				</div>
+			}
+			<!-- Placeholder -->
+			<span
+				class="px-1 text-sm text-neutral-500"
+				data-show={ fmt.Sprintf(
+					"$_%s_selected.length === 0",
+					props.Name,
+				) }
+				style="display: none"
+			>
+				{ props.Placeholder }
+			</span>
+			<!-- Chevron -->
+			<div class="ml-auto shrink-0 text-white">
+				<svg
+					class="h-5 w-5 transition-transform"
+					data-class:rotate-180={ fmt.Sprintf(
+						"$_%s_open",
+						props.Name,
+					) }
+					viewBox="0 0 20 20"
+					fill="currentColor"
+				>
+					<path
+						fill-rule="evenodd"
+						d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+						clip-rule="evenodd"
+					></path>
+				</svg>
+			</div>
+		</div>
+		<!-- Dropdown -->
+		<div
+			class="absolute z-50 mt-2 w-full bg-black overflow-hidden rounded-lg p-2"
+			data-show={ fmt.Sprintf(
+				"$_%s_open",
+				props.Name,
+			) }
+		>
+			for _, option := range props.Options {
+				<div
+					class="flex items-center gap-4 rounded-lg px-4 py-3 hover:bg-blue-800"
+					if !option.Disabled {
+						if props.Multiple {
+							data-on:click={ fmt.Sprintf(
+								"$_%s_selected.includes('%s') ? $_%s_selected = $_%s_selected.filter(x => x !== '%s') : $_%s_selected = [...$_%s_selected, '%s']",
+								props.Name,
+								option.Value,
+								props.Name,
+								props.Name,
+								option.Value,
+								props.Name,
+								props.Name,
+								option.Value,
+							) }
+						} else {
+							data-on:click={ fmt.Sprintf(
+								"$_%s_selected = ['%s']; $_%s_open = false",
+								props.Name,
+								option.Value,
+								props.Name,
+							) }
+						}
+					}
+				>
+					<div class="min-w-0 flex-1">
+						<div class="font-semibold text-white">
+							{ option.Label }
+						</div>
+						if option.Subtitle != "" {
+							<div class="text-sm text-neutral-400">
+								{ option.Subtitle }
+							</div>
+						}
+					</div>
+					<!-- Checkmark -->
+					<svg
+						class="h-5 w-5 text-blue-500"
+						data-show={ fmt.Sprintf(
+							"$_%s_selected.includes('%s')",
+							props.Name,
+							option.Value,
+						) }
+						style="display: none"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M16.704 5.296a1 1 0 010 1.408l-7.5 7.5a1 1 0 01-1.408 0l-3.5-3.5a1 1 0 011.408-1.408L8.5 11.204l6.796-6.796a1 1 0 011.408 0z"
+							clip-rule="evenodd"
+						></path>
+					</svg>
+				</div>
+			}
+		</div>
+		<!-- Actual submitted values -->
+		for _, option := range props.Options {
+			<input
+				type="hidden"
+				name={ props.Name }
+				value={ option.Value }
+				data-attr:disabled={ fmt.Sprintf(
+					"!$_%s_selected.includes('%s')",
+					props.Name,
+					option.Value,
+				) }
+			/>
+		}
+	</div>
+}

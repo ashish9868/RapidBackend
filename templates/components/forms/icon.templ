@@ -1,0 +1,7 @@
+package forms
+
+templ Icon(name string, attrs ...Attr) {
+	if (len(name) > 0) {
+		<i class={ "ti ti-" + name } { AppendAttrs(attrs)... }></i>
+	}
+}

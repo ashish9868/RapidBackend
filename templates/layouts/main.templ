@@ -1,19 +1,15 @@
 package layouts
 
 templ MainLayout() {
-<!-- Production version -->
-<html>
-<head>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-<script src="//unpkg.com/alpinejs" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
-    integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
-    crossorigin="anonymous"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
-<style type="text/tailwindcss">
+	<!-- Production version -->
+	<html>
+		<head>
+			<script type="module" src="/static/js/datastar.min.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+			<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+			<style type="text/tailwindcss">
 @theme {
   /* Semantic colors */
   --color-primary: #000000;      /* sky-500 */
@@ -48,31 +44,22 @@ input:-webkit-autofill:active{
     display: none;             /* Chrome, Safari */
 }
 </style>
-</head>
-<body class="bg-[#1c1c1c]">
-<div class="flex w-full max-w-lg justify-self-center items-center self-center min-h-screen">
-    <form class="flex w-full flex-col gap-8 px-4 pb-16 items-center items-center">
-        <div class="text-white font-bold flex flex-col text-center items-center">
-          <img width={100} src={"/static/logo.svg"} alt='Rapid Backend' />
-          <p>Superadmin Login</p>
-        </div>
-
-        { children... }
-    </form>
-</div>
-</body>
-</html>
+		</head>
+		<body class="bg-[#1c1c1c]">
+			<div class="flex w-full max-w-lg justify-self-center items-center self-center min-h-screen">
+				{ children... }
+			</div>
+		</body>
+	</html>
 }
 
-
 templ RunJs() {
-    <script>
-            lucide.createIcons();
+	<script>
             document.addEventListener("DOMContentLoaded", () => {
-                document.querySelectorAll("[data-flatpickr]:not([data-flatpickr-initialized])")
+                document.querySelectorAll("[data-flatpicker]:not([data-flatpicker-initialized])")
                     .forEach((el) => {
-                        const altFormat = el.getAttribute('data-altFormat')
-                        const dateFormat = el.getAttribute('data-dateFormat')
+                        const altFormat = el.getAttribute('data-altformat')
+                        const dateFormat = el.getAttribute('data-dateformat')
                         flatpickr(el, {
                             altInput: true,
                             time_24hr: true,
@@ -88,7 +75,5 @@ templ RunJs() {
     </script>
 }
 
-
 templ Footer() {
-    
 }

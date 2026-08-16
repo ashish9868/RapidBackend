@@ -29,33 +29,7 @@ func MainLayout() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Production version --><html><head><script src=\"https://unpkg.com/lucide@latest\"></script><script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script><script src=\"//unpkg.com/alpinejs\" defer></script><script src=\"https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js\" integrity=\"sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css\"><script src=\"https://cdn.jsdelivr.net/npm/flatpickr\"></script><style type=\"text/tailwindcss\">\n@theme {\n  /* Semantic colors */\n  --color-primary: #000000;      /* sky-500 */\n  --color-success: #22c55e;      /* green-500 */\n  --color-warning: #f59e0b;      /* amber-500 */\n  --color-danger: #ef4444;       /* red-500 */\n}\n\n.tox-tinymce{\n    width: 100% !important;\n}\n\ninput[type=\"datetime-local\"]::-webkit-calendar-picker-indicator, input[type=\"date\"]::-webkit-calendar-picker-indicator {\n  display: none !important;\n}\ninput:-webkit-autofill,\ninput:-webkit-autofill:hover, \ninput:-webkit-autofill:focus, \ninput:-webkit-autofill:active{\n    /* -webkit-box-shadow: 0 0 0px 1000px white inset !important; */\n    -webkit-text-fill-color: #fff !important;\n    transition: background-color 5000s ease-in-out 0s;\n}\n\n/* Hide scrollbar but keep scrolling */\n.hide-scroll {\n    -ms-overflow-style: none;  /* IE/Edge */\n    scrollbar-width: none;     /* Firefox */\n}\n\n.hide-scroll::-webkit-scrollbar {\n    display: none;             /* Chrome, Safari */\n}\n</style></head><body class=\"bg-[#1c1c1c]\"><div class=\"flex w-full max-w-lg justify-self-center items-center self-center min-h-screen\"><form class=\"flex w-full flex-col gap-8 px-4 pb-16 items-center items-center\"><div class=\"text-white font-bold flex flex-col text-center items-center\"><img width=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(100)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layouts/main.templ`, Line: 56, Col: 25}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" src=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue("/static/logo.svg")
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layouts/main.templ`, Line: 56, Col: 50}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" alt=\"Rapid Backend\"><p>Superadmin Login</p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Production version --><html><head><script type=\"module\" src=\"/static/js/datastar.min.js\"></script><script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script><link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css\"><link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css\"><script src=\"https://cdn.jsdelivr.net/npm/flatpickr\"></script><style type=\"text/tailwindcss\">\n@theme {\n  /* Semantic colors */\n  --color-primary: #000000;      /* sky-500 */\n  --color-success: #22c55e;      /* green-500 */\n  --color-warning: #f59e0b;      /* amber-500 */\n  --color-danger: #ef4444;       /* red-500 */\n}\n\n.tox-tinymce{\n    width: 100% !important;\n}\n\ninput[type=\"datetime-local\"]::-webkit-calendar-picker-indicator, input[type=\"date\"]::-webkit-calendar-picker-indicator {\n  display: none !important;\n}\ninput:-webkit-autofill,\ninput:-webkit-autofill:hover, \ninput:-webkit-autofill:focus, \ninput:-webkit-autofill:active{\n    /* -webkit-box-shadow: 0 0 0px 1000px white inset !important; */\n    -webkit-text-fill-color: #fff !important;\n    transition: background-color 5000s ease-in-out 0s;\n}\n\n/* Hide scrollbar but keep scrolling */\n.hide-scroll {\n    -ms-overflow-style: none;  /* IE/Edge */\n    scrollbar-width: none;     /* Firefox */\n}\n\n.hide-scroll::-webkit-scrollbar {\n    display: none;             /* Chrome, Safari */\n}\n</style></head><body class=\"bg-[#1c1c1c]\"><div class=\"flex w-full max-w-lg justify-self-center items-center self-center min-h-screen\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -63,7 +37,7 @@ func MainLayout() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</form></div></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -87,12 +61,12 @@ func RunJs() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var2 == nil {
+			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<script>\n            lucide.createIcons();\n            document.addEventListener(\"DOMContentLoaded\", () => {\n                document.querySelectorAll(\"[data-flatpickr]:not([data-flatpickr-initialized])\")\n                    .forEach((el) => {\n                        const altFormat = el.getAttribute('data-altFormat')\n                        const dateFormat = el.getAttribute('data-dateFormat')\n                        flatpickr(el, {\n                            altInput: true,\n                            time_24hr: true,\n                            allowInput: true,\n                            altFormat: altFormat ?? \"m/d/Y\",\n                            dateFormat: dateFormat ?? \"Y-m-d\",\n                            enableTime: `${dateFormat}`.includes('H') ? true: false,\n                            noCalendar: `${dateFormat}`.includes('Y') ? false: true,\n                        });\n                        el.dataset.flatpickrInitialized = \"true\";\n                    });\n            });\n    </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script>\n            document.addEventListener(\"DOMContentLoaded\", () => {\n                document.querySelectorAll(\"[data-flatpicker]:not([data-flatpicker-initialized])\")\n                    .forEach((el) => {\n                        const altFormat = el.getAttribute('data-altformat')\n                        const dateFormat = el.getAttribute('data-dateformat')\n                        flatpickr(el, {\n                            altInput: true,\n                            time_24hr: true,\n                            allowInput: true,\n                            altFormat: altFormat ?? \"m/d/Y\",\n                            dateFormat: dateFormat ?? \"Y-m-d\",\n                            enableTime: `${dateFormat}`.includes('H') ? true: false,\n                            noCalendar: `${dateFormat}`.includes('Y') ? false: true,\n                        });\n                        el.dataset.flatpickrInitialized = \"true\";\n                    });\n            });\n    </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -116,9 +90,9 @@ func Footer() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		return nil
