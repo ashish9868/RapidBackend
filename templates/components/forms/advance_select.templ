@@ -100,7 +100,7 @@ templ Select(props InputBaseProps) {
 		>
 			for _, option := range props.Options {
 				<div
-					class="flex items-center gap-4 rounded-lg px-4 py-3 hover:bg-blue-800"
+					class="flex items-center gap-4 rounded-lg px-4 py-3 text-xs hover:bg-blue-800"
 					if !option.Disabled {
 						if props.Multiple {
 							data-on:click={ fmt.Sprintf(
@@ -136,7 +136,7 @@ templ Select(props InputBaseProps) {
 					</div>
 					<!-- Checkmark -->
 					<svg
-						class="h-5 w-5 text-blue-500"
+						class="h-3 w-3 text-white"
 						data-show={ fmt.Sprintf(
 							"$_%s_selected.includes('%s')",
 							props.Name,
