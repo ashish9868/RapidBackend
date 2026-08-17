@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/ashish9868/rapidbackend/core/services"
 	"github.com/ashish9868/rapidbackend/models"
 	"github.com/ashish9868/rapidbackend/utils"
@@ -41,11 +42,13 @@ type ResourceAction struct {
 	Middlewares []gin.HandlerFunc
 }
 type ResourceHandler struct {
-	Index  *ResourceAction
-	Show   *ResourceAction
-	Create *ResourceAction
-	Update *ResourceAction
-	Delete *ResourceAction
+	Index      *ResourceAction
+	Show       *ResourceAction
+	Create     *ResourceAction
+	CreateForm *ResourceAction
+	Update     *ResourceAction
+	UpdateForm *ResourceAction
+	Delete     *ResourceAction
 }
 
 func NoCacheMiddleware() gin.HandlerFunc {
@@ -153,6 +156,13 @@ func (app *App) ResourceRoutes(name string, group *gin.RouterGroup, handler Reso
 		})
 	}
 
+	if handler.CreateForm != nil {
+		group.Use(append(middlewares, handler.CreateForm.Middlewares...)...)
+		group.GET(base, func(ctx *gin.Context) {
+			handler.CreateForm.Handler(ctx, app)
+		})
+	}
+
 	if handler.Update != nil {
 		group.Use(append(middlewares, handler.Update.Middlewares...)...)
 		group.PUT(base+id_segment, func(ctx *gin.Context) {
@@ -160,6 +170,13 @@ func (app *App) ResourceRoutes(name string, group *gin.RouterGroup, handler Reso
 		})
 		group.PATCH(base+id_segment, func(ctx *gin.Context) {
 			handler.Update.Handler(ctx, app)
+		})
+	}
+
+	if handler.UpdateForm != nil {
+		group.Use(append(middlewares, handler.UpdateForm.Middlewares...)...)
+		group.GET(base+id_segment, func(ctx *gin.Context) {
+			handler.UpdateForm.Handler(ctx, app)
 		})
 	}
 
@@ -225,7 +242,7 @@ func (app *App) ServeStatic() {
 
 func (app *App) ServeNoRoute() {
 	app.Gin.NoRoute(app.NewAuthMiddleWare(false, true), func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusPermanentRedirect, "/")
+		ctx.Redirect(http.StatusPermanentRedirect, "/login")
 	})
 }
 
@@ -259,7 +276,6 @@ func (app *App) HttpUnauthorized(ctx *gin.Context) {
 		})
 	}
 	ctx.Abort()
-	return
 }
 
 func (app *App) IsHTMX(ctx *gin.Context) bool {
@@ -351,6 +367,11 @@ func (app *App) SendResponse(ctx *gin.Context, response Response) {
 		ctx.JSON(response.Code, templateData)
 	}
 	ctx.Abort()
+}
+
+func (app *App) RenderComponent(ctx *gin.Context, component templ.Component) {
+	ctx.Header("Content-Type", "text/html; charset=utf-8")
+	component.Render(ctx, ctx.Writer)
 }
 
 func (app *App) FormatErrors(err error) map[string]any {

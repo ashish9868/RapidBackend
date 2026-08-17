@@ -2,60 +2,19 @@ package pages
 
 import "github.com/ashish9868/rapidbackend/templates/layouts"
 import "github.com/ashish9868/rapidbackend/templates/components/forms"
+import "github.com/ashish9868/rapidbackend/dto"
+
+templ LoginForm(login *dto.LoginForm, errors map[string]any) {
+	@forms.Form("superadmin_login_form", "/login", "post") {
+		@forms.Input(forms.InputBaseProps{Type: "email", Name: "email", Label: "Email", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: forms.PullMapValue(errors, "email")})
+		@forms.Input(forms.InputBaseProps{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Name", Error: forms.PullMapValue(errors, "password")})
+		@forms.Button(forms.ButtonBaseProps{Label: "Login", EndIcon: "arrow-right", Type: "submit"})
+		@layouts.RunJs()
+	}
+}
 
 templ LoginPage() {
-	@layouts.MainLayout() {
-		@forms.Form() {
-			<div class="text-white font-bold flex flex-col text-center items-center">
-				<img width={ 100 } src={ "/static/logo.svg" } alt="Rapid Backend"/>
-				<p>Superadmin Login</p>
-			</div>
-			@forms.Select(forms.InputBaseProps{
-				Multiple:    true,
-				Name:        "options",
-				Label:       "Choose Options",
-				LabelIcon:   "list",
-				Placeholder: "Choose Options",
-				Selected:    []string{},
-				Options: []forms.SelectOption{
-					{Label: "India2", Value: "IN2"},
-					{Label: "India", Value: "IN"},
-					{Label: "United States", Value: "US"},
-					{Label: "London", Value: "UK"},
-					{Label: "Nepal", Value: "NP"},
-				},
-			})
-			@forms.Input(forms.InputBaseProps{Name: "name", Label: "Name", LabelIcon: "user", Type: "text", Placeholder: "Enter Name", Error: "Name field is required", HelperText: "Enter Your Name for registration"})
-			@forms.Input(forms.InputBaseProps{Type: "textarea", Name: "bio", Label: "Bio", LabelIcon: "list", Placeholder: "Enter Bio", Error: "Bio field is required", HelperText: "Enter Your Bio for registration"})
-			@forms.FileInput(forms.InputBaseProps{Name: "files", Label: "Upload", LabelIcon: "upload", Attrs: []forms.Attr{
-				forms.Attr{Name: "accept", Value: "image/*"},
-				forms.Attr{Name: "data-max", Value: "1"},
-			}})
-			@forms.Input(forms.InputBaseProps{Name: "email", Label: "Name", LabelIcon: "mail", Type: "email", Placeholder: "Enter Name"})
-			@forms.Input(forms.InputBaseProps{Type: "date", Name: "dob", Label: "DOB", LabelIcon: "calendar-clock", Placeholder: "Enter Date", Attrs: []forms.Attr{
-				forms.Attr{Name: "data-dateformat", Value: forms.DATE_FORMAT},
-				forms.Attr{Name: "data-alformat", Value: forms.DISPLAY_DATE_FORMAT},
-			}})
-			@forms.Select(forms.InputBaseProps{
-				Multiple:    false,
-				Name:        "country",
-				Label:       "Choose Countries",
-				LabelIcon:   "flag",
-				Placeholder: "Choose Countries",
-				Selected:    []string{},
-				Options: []forms.SelectOption{
-					{Label: "India2", Value: "IN2"},
-					{Label: "India", Value: "IN"},
-					{Label: "United States", Value: "US"},
-					{Label: "London", Value: "UK"},
-					{Label: "Nepal", Value: "NP"},
-				},
-			})
-			@forms.Switch(forms.InputBaseProps{Name: "on", Label: "Enable Settings"})
-			@forms.Input(forms.InputBaseProps{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Password"})
-			@forms.Input(forms.InputBaseProps{Type: "password", Name: "confirm_password", Label: "Confirm Password", LabelIcon: "key", Placeholder: "Enter Confirm Password"})
-			@forms.Button(forms.ButtonBaseProps{Label: "Submit", Type: "submit"})
-			@layouts.RunJs()
-		}
+	@layouts.PublicLayout() {
+		@LoginForm(&dto.LoginForm{}, map[string]any{})
 	}
 }

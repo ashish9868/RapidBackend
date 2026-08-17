@@ -1,6 +1,7 @@
 package forms
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -161,4 +162,20 @@ func getAttribute(attrs []Attr, key string, defaultValue string) string {
 		}
 	}
 	return defaultValue
+}
+
+func PullMapValue(values_map map[string]any, key string) string {
+	value, exists := values_map[key]
+	if exists {
+		return fmt.Sprintf("%s", value)
+	}
+	return ""
+}
+
+func ToJson(value any) string {
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return err.Error()
+	}
+	return string(bytes[:])
 }

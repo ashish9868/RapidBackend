@@ -1,12 +1,5 @@
-@import "tailwindcss";
 
-@theme {
-  /* Semantic colors */
-  --color-primary: #000000;      /* sky-500 */
-  --color-success: #22c55e;      /* green-500 */
-  --color-warning: #f59e0b;      /* amber-500 */
-  --color-danger: #ef4444;       /* red-500 */
-}
+
 
 .tox-tinymce{
     width: 100% !important;

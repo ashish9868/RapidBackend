@@ -1,0 +1,35 @@
+package layouts
+
+templ PublicLayout() {
+	@BaseLayout() {
+		<div class="flex flex-col gap-4 w-full max-w-lg justify-center justify-self-center items-center min-h-screen py-6">
+			<div class="text-white font-bold flex flex-col min-h-[150px] text-center items-center">
+				<img width={ 100 } src={ "/static/logo.svg" } alt="Rapid Backend"/>
+				<p>Superadmin Login</p>
+			</div>
+			{ children... }
+		</div>
+	}
+}
+
+templ RunJs() {
+	<script>
+            document.addEventListener("DOMContentLoaded", () => {
+                document.querySelectorAll("[data-flatpicker]:not([data-flatpicker-initialized])")
+                    .forEach((el) => {
+                        const altFormat = el.getAttribute('data-altformat')
+                        const dateFormat = el.getAttribute('data-dateformat')
+                        flatpickr(el, {
+                            altInput: true,
+                            time_24hr: true,
+                            allowInput: true,
+                            altFormat: altFormat ?? "m/d/Y",
+                            dateFormat: dateFormat ?? "Y-m-d",
+                            enableTime: `${dateFormat}`.includes('H') ? true: false,
+                            noCalendar: `${dateFormat}`.includes('Y') ? false: true,
+                        });
+                        el.dataset.flatpickrInitialized = "true";
+                    });
+            });
+    </script>
+}

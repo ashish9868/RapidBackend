@@ -1,11 +1,18 @@
 package forms
 
-templ Form(attrs ...Attr) {
+import "fmt"
+
+templ Form(id, action, method string, attrs ...Attr) {
 	<form
 		{ AppendAttrs(attrs, []Attr{
+        {Name: "id", Value: id},
+        {Name: "action", Value: action},
+        {Name: "method", Value: method},
         {Name: "class", Value: "flex flex-col gap-3 w-full"},
         {Name: "autocomplete", Value: "off"},
+        {Name: "data-on:submit__prevent", Value: fmt.Sprintf("@%s('%s',  {contentType: 'form'})", method, action)},
     }...)... }
-	>{ children... }
-</form>
+	>
+		{ children... }
+	</form>
 }

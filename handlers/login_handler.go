@@ -5,22 +5,18 @@ import (
 	"net/http"
 
 	"github.com/ashish9868/rapidbackend/core"
+	"github.com/ashish9868/rapidbackend/dto"
 	"github.com/gin-gonic/gin"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
-
-type LoginForm struct {
-	Email    string `json:"email" form:"email"`
-	Password string `json:"password" form:"password"`
-}
 
 func LoginHandler(collection string) *core.ResourceHandler {
 	return &core.ResourceHandler{
 		Create: &core.ResourceAction{
 			Handler: func(ctx *gin.Context, app *core.App) {
 				view := "fragment.login"
-				var form LoginForm
+				var form dto.LoginForm
 				// ShouldBind checks Content-Type to select a binding engine automatically
 				if err := app.BindSafely(ctx, &form); err != nil {
 					app.SendResponse(ctx, core.Response{
