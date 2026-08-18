@@ -1,15 +1,34 @@
 package respository
 
-import "github.com/uptrace/bun"
+import (
+	"github.com/ashish9868/rapidbackend/models"
+	"github.com/ashish9868/rapidbackend/utils"
+)
 
 type AuthRepository struct {
-	DB *bun.DB
+	BaseRepository *BaseRepository
 }
 
-func NewAuthRepository(db *bun.DB) *AuthRepository {
-	return &AuthRepository{DB: db}
+func NewAuthRepository(baseRepository *BaseRepository) *AuthRepository {
+	return &AuthRepository{BaseRepository: baseRepository}
 }
 
-func GetSuperAdminByEmail(email string) {
+func (a *AuthRepository) GetSuperAdminBy(column string, value string) *models.Superadmin {
+	user := &models.Superadmin{}
+	err := a.BaseRepository.GetByColumn(user, column, value)
+	if err != nil {
+		utils.Log("Unable to find superadmin", err.Error())
+		return nil
+	}
+	return user
+}
 
+func (a *AuthRepository) GetUserBy(column string, value string) *models.User {
+	user := &models.User{}
+	err := a.BaseRepository.GetByColumn(user, column, value)
+	if err != nil {
+		utils.Log("Unable to find user", err.Error())
+		return nil
+	}
+	return user
 }

@@ -14,12 +14,11 @@ import (
 )
 
 type AuthService struct {
-	Bun      *bun.DB
-	BaseUtil utils.BaseUtil
+	Bun *bun.DB
 }
 
-func NewAuthService(bun *bun.DB, util utils.BaseUtil) *AuthService {
-	return &AuthService{Bun: bun, BaseUtil: util}
+func NewAuthService(bun *bun.DB) *AuthService {
+	return &AuthService{Bun: bun}
 }
 
 func (a *AuthService) LoginByEmail(email string, password string, collection string) *dto.AuthUser {
@@ -33,14 +32,14 @@ func (a *AuthService) LoginByEmail(email string, password string, collection str
 	if len(ID) < 1 {
 		return nil
 	}
-	if !a.BaseUtil.CheckPassword(Password, password) {
+	if !utils.CheckPassword(Password, password) {
 		return nil
 	}
-	_, access_token, _ := a.BaseUtil.GenerateRandomHash()
+	_, access_token, _ := utils.GenerateRandomHash()
 
 	user := a.GetAnyUserById(collection, ID)
 
-	hashedToken := a.BaseUtil.HashPassword(access_token)
+	hashedToken := utils.HashPassword(access_token)
 	token := &models.AccessKeyToken{
 		ID:           xid.New().String(),
 		CollectionID: user.ID,

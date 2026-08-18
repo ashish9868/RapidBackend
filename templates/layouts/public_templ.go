@@ -41,7 +41,7 @@ func PublicLayout() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-4 w-full max-w-lg justify-center justify-self-center items-center min-h-screen py-6\"><div class=\"text-white font-bold flex flex-col min-h-[150px] text-center items-center\"><img width=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-4 w-full max-w-sm justify-center justify-self-center items-center min-h-screen py-6\"><div class=\"text-white font-bold flex flex-col min-h-[150px] text-center items-center\"><img width=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

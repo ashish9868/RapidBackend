@@ -38,7 +38,7 @@ type Superadmin struct {
 	LastName        string     `bun:"last_name"`
 	Email           string     `bun:"email,unique:unq_project_email,notnull"`
 	Password        string     `bun:"password,notnull" json:"-"`
-	EmailVerifiedAt *time.Time `bun:"email_verified_at,notnull"`
+	EmailVerifiedAt *time.Time `bun:"email_verified_at"`
 	IsActive        bool       `bun:"is_active,default:'0'"`
 	CreatedAt       time.Time  `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 	UpdatedAt       time.Time  `bun:"updated_at,nullzero,notnull,default:current_timestamp"`

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ashish9868/rapidbackend/core"
 	"github.com/ashish9868/rapidbackend/models"
+	"github.com/ashish9868/rapidbackend/utils"
 	"github.com/gin-gonic/gin"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -13,12 +14,12 @@ import (
 )
 
 type UserForm struct {
-	ProjectID *string        `json:"project_id" form:"project_id"`
-	FirstName string         `json:"first_name" form:"first_name"`
-	LastName  string         `json:"last_name" form:"last_name"`
-	Email     string         `json:"email" form:"email"`
-	Password  string         `json:"password" form:"password"`
-	IsActive  bool           `json:"is_active" form:"is_active"`
+	ProjectID   *string        `json:"project_id" form:"project_id"`
+	FirstName   string         `json:"first_name" form:"first_name"`
+	LastName    string         `json:"last_name" form:"last_name"`
+	Email       string         `json:"email" form:"email"`
+	Password    string         `json:"password" form:"password"`
+	IsActive    bool           `json:"is_active" form:"is_active"`
 	Permissions map[string]any `json:"permissions" form:"permissions"`
 }
 
@@ -77,7 +78,7 @@ func NewUsersHandler() *core.ResourceHandler {
 					FirstName:   form.FirstName,
 					LastName:    form.LastName,
 					Email:       form.Email,
-					Password:    app.BaseUtil.HashPassword(form.Password),
+					Password:    utils.HashPassword(form.Password),
 					IsActive:    form.IsActive,
 					Permissions: form.Permissions,
 				}
@@ -119,7 +120,7 @@ func NewUsersHandler() *core.ResourceHandler {
 					user.Email = form.Email
 				}
 				if form.Password != "" {
-					user.Password = app.BaseUtil.HashPassword(form.Password)
+					user.Password = utils.HashPassword(form.Password)
 				}
 				user.IsActive = form.IsActive
 				if form.ProjectID != nil {

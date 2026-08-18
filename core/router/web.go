@@ -11,10 +11,8 @@ type WebRouter struct {
 
 func (r *WebRouter) RegisterRoutes() {
 	app := r.App
-
 	suGroup := app.Gin.Group("/")
 	app.ResourceRoutes("login", suGroup, *superadmin.SuperAdminLoginHandler())
-
 	app.ServeStatic()
 	app.ServeNoRoute()
 

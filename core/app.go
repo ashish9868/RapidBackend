@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
+	"github.com/ashish9868/rapidbackend/constants"
+	"github.com/ashish9868/rapidbackend/core/respository"
 	"github.com/ashish9868/rapidbackend/core/services"
 	"github.com/ashish9868/rapidbackend/models"
 	"github.com/ashish9868/rapidbackend/utils"
@@ -28,13 +30,13 @@ import (
 )
 
 type App struct {
-	Bun         *bun.DB
-	BaseUtil    *utils.BaseUtil
-	Gin         *gin.Engine
-	FeFs        *fs.FS
-	Version     *string
-	AuthService *services.AuthService
-	Repository  *Repository
+	Bun            *bun.DB
+	Gin            *gin.Engine
+	FeFs           *fs.FS
+	Version        *string
+	AuthService    *services.AuthService
+	BaseRepository *respository.BaseRepository
+	AuthRepository *respository.AuthRepository
 }
 
 type ResourceAction struct {
@@ -62,19 +64,18 @@ func NoCacheMiddleware() gin.HandlerFunc {
 
 func NewApp(embed embed.FS) *App {
 
-	baseUtil := utils.NewBaseUtil()
 	time.Local = time.UTC
 
 	data_dir := "app_data"
 	env_path := data_dir + "/.env"
 	env_data := []string{
-		fmt.Sprintf(`PORT=%d`, utils.DEFAULT_PORT),
+		fmt.Sprintf(`PORT=%d`, constants.DEFAULT_PORT),
 		fmt.Sprintf(`DATA_DIR=%s`, "app_data"),
 		fmt.Sprintf(`BUNDEBUG=%d`, 1),
 		fmt.Sprintf(`GIN_MODE=%s`, "release"),
-		fmt.Sprintf(`ENCRYPTION_KEY=%s`, baseUtil.HashPassword(xid.New().String())),
+		fmt.Sprintf(`ENCRYPTION_KEY=%s`, utils.HashPassword(xid.New().String())),
 	}
-	err := baseUtil.SafeCreateFile(env_path, strings.Join(env_data, "\n"))
+	err := utils.SafeCreateFile(env_path, strings.Join(env_data, "\n"))
 
 	if err != nil {
 		println(fmt.Println(err.Error()))
@@ -113,17 +114,25 @@ func NewApp(embed embed.FS) *App {
 
 	db.AddQueryHook(
 		bundebug.NewQueryHook(
-
 			bundebug.WithEnabled(false),
 			bundebug.FromEnv("BUNDEBUG"),
 		),
 	)
-	gin.SetMode(baseUtil.SafeEnvGet("GIN_MODE", gin.DebugMode))
+	gin.SetMode(utils.ToString(utils.SafeEnvGet("GIN_MODE", gin.DebugMode)))
 	engine := gin.Default()
 	engine.Use(NoCacheMiddleware())
-	app := &App{Bun: db, BaseUtil: baseUtil, Gin: engine, FeFs: baseUtil.SubFs(embed, "static"), AuthService: services.NewAuthService(db, *baseUtil), Repository: NewRepository(db)}
+
+	baseRepository := &respository.BaseRepository{DB: db}
+	app := &App{
+		Bun:            db,
+		Gin:            engine,
+		FeFs:           utils.SubFs(embed, "static"),
+		AuthService:    services.NewAuthService(db),
+		BaseRepository: baseRepository,
+		AuthRepository: &respository.AuthRepository{BaseRepository: baseRepository},
+	}
 	app.InitializeSystem()
-	fmt.Printf("APP will start on PORT: %s\n\n", baseUtil.SafeEnvGet("PORT", strconv.Itoa(utils.DEFAULT_PORT)))
+	fmt.Printf("APP will start on PORT: %s\n\n", utils.SafeEnvGet("PORT", strconv.Itoa(constants.DEFAULT_PORT)))
 	return app
 }
 
@@ -138,7 +147,7 @@ func (app *App) ResourceRoutes(name string, group *gin.RouterGroup, handler Reso
 	id_segment := ""
 	parts := strings.Split(base, "/")
 	if len(parts) > 0 {
-		id_segment = app.BaseUtil.Singular(parts[len(parts)-1])
+		id_segment = utils.Singular(parts[len(parts)-1])
 	}
 
 	id_segment = id_segment + "_id"
@@ -221,17 +230,6 @@ func (app *App) InitializeSystem() {
 	app.Bun.NewCreateTable().Model((*models.ProjectCollectionRecord)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.EmailTemplate)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
 	app.Bun.NewCreateTable().Model((*models.SystemSetting)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-
-	t := time.Now()
-	app.Bun.NewInsert().Model(&models.User{
-		ID:              xid.New().String(),
-		FirstName:       "Ashish",
-		LastName:        "Kumar",
-		Email:           "funappzco@gmail.com",
-		Password:        app.BaseUtil.HashPassword("Asdf1234@#$"),
-		IsActive:        true,
-		EmailVerifiedAt: &t,
-	}).Exec(context.Background())
 }
 
 func (app *App) ServeStatic() {
@@ -343,7 +341,7 @@ type Response struct {
 }
 
 func (app *App) SendResponse(ctx *gin.Context, response Response) {
-	app.BaseUtil.PrintFiles(*app.FeFs)
+	utils.PrintFiles(*app.FeFs)
 	formData := response.FormData
 	if formData == nil {
 		formData = map[string]any{}
