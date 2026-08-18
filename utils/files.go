@@ -19,6 +19,15 @@ func FileExists(embed fs.FS, path string) bool {
 	return false
 }
 
+func ReadFsFile(embed fs.FS, path string) string {
+	data, err := fs.ReadFile(embed, path)
+	if err != nil {
+		LogF("Error Reading Path : %s -> %s", path, err.Error())
+		return ""
+	}
+	return string(data[:])
+}
+
 func PrintFiles(embed fs.FS) error {
 	// Walk the root directory "." to visit every file and folder
 	err := fs.WalkDir(embed, ".", func(path string, d fs.DirEntry, err error) error {
@@ -41,6 +50,33 @@ func PrintFiles(embed fs.FS) error {
 	})
 
 	return err
+}
+
+func ListFiles(fsys fs.FS, extensions ...string) ([]string, error) {
+	var files []string
+
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		ext := filepath.Ext(path)
+
+		for _, allowed := range extensions {
+			if ext == allowed {
+				files = append(files, path)
+				break
+			}
+		}
+
+		return nil
+	})
+
+	return files, err
 }
 
 func SubFs(embed fs.FS, path string) *fs.FS {

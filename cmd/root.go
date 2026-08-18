@@ -23,6 +23,8 @@ func ExecuteRootCommand(app *core.App) {
 	rootCmd.AddCommand(NewServeCommand(app))
 	rootCmd.AddCommand(NewCreateSuperAdminCommand(app))
 	rootCmd.AddCommand(NewTestCommand(app))
+	rootCmd.AddCommand(NewMigrationGenerateCommand(app))
+	rootCmd.AddCommand(MigrateDatabaseCommand(app))
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

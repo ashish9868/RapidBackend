@@ -13,6 +13,7 @@ var (
 
 //go:embed static/**
 //go:embed static/*
+//go:embed database/migrations/*
 var embeddedFiles embed.FS
 
 func main() {
