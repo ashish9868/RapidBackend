@@ -1,10 +1,12 @@
 package superadmin
 
 import (
+	"net/http"
+
 	"github.com/ashish9868/rapidbackend/core"
 	"github.com/ashish9868/rapidbackend/dto"
 	"github.com/ashish9868/rapidbackend/templates/pages"
-	"github.com/gin-gonic/gin"
+	"github.com/ashish9868/rapidbackend/utils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
@@ -12,16 +14,17 @@ import (
 func SuperAdminLoginHandler() *core.ResourceHandler {
 	return &core.ResourceHandler{
 		Index: &core.ResourceAction{
-			Handler: func(ctx *gin.Context, app *core.App) {
-				pages.LoginPage().Render(ctx, ctx.Writer)
+			Handler: func(w http.ResponseWriter, r *http.Request, app *core.App) {
+				utils.Log("coming here")
+				app.RenderComponent(w, pages.LoginPage())
 			},
 		},
 		Create: &core.ResourceAction{
-			Handler: func(ctx *gin.Context, app *core.App) {
+			Handler: func(w http.ResponseWriter, r *http.Request, app *core.App) {
 				var form dto.LoginForm
 				// ShouldBind checks Content-Type to select a binding engine automatically
-				if err := app.BindSafely(ctx, &form); err != nil {
-					app.RenderComponent(ctx, pages.LoginForm(&form, app.FormatErrors(err)))
+				if err := app.BindSafely(w, r, &form); err != nil {
+					app.RenderComponent(w, pages.LoginForm(&form, app.FormatErrors(err)))
 					return
 				}
 
@@ -36,11 +39,11 @@ func SuperAdminLoginHandler() *core.ResourceHandler {
 				)
 
 				if err != nil {
-					app.RenderComponent(ctx, pages.LoginForm(&form, app.FormatErrors(err)))
+					app.RenderComponent(w, pages.LoginForm(&form, app.FormatErrors(err)))
 					return
 				}
 
-				app.RenderComponent(ctx, pages.LoginForm(&form, map[string]any{}))
+				app.RenderComponent(w, pages.LoginForm(&form, map[string]any{}))
 			},
 		},
 	}

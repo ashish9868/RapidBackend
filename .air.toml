@@ -8,7 +8,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = ["serve"]
   bin = "./main"
-  cmd = "templ generate && go build -o ./main ."
+  cmd = "templ generate && CGO_ENABLED=1 go build -o ./main ."
   delay = 1000
   entrypoint = ["./main"]
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]

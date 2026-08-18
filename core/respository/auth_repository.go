@@ -15,7 +15,7 @@ func NewAuthRepository(baseRepository *BaseRepository) *AuthRepository {
 
 func (a *AuthRepository) GetSuperAdminBy(column string, value string) *models.Superadmin {
 	user := &models.Superadmin{}
-	err := a.BaseRepository.GetByColumn(user, column, value)
+	err := a.BaseRepository.GetByColumn(COLLECTION_SUPERADMINS, column, value, user)
 	if err != nil {
 		utils.Log("Unable to find superadmin", err.Error())
 		return nil
@@ -25,10 +25,14 @@ func (a *AuthRepository) GetSuperAdminBy(column string, value string) *models.Su
 
 func (a *AuthRepository) GetUserBy(column string, value string) *models.User {
 	user := &models.User{}
-	err := a.BaseRepository.GetByColumn(user, column, value)
+	err := a.BaseRepository.GetByColumn(COLLECTION_USERS, column, value, user)
 	if err != nil {
 		utils.Log("Unable to find user", err.Error())
 		return nil
 	}
 	return user
+}
+
+func (a *AuthRepository) GetUserByToken(token string) *models.User {
+	return nil
 }

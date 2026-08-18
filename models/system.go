@@ -2,18 +2,6 @@ package models
 
 import "time"
 
-const (
-	COLLECTION_SUPERADMINS                = "superadmins"
-	COLLECTION_USERS                      = "users"
-	COLLECTION_ACCESS_KEY_TOKENS          = "access_key_tokens"
-	COLLECTION_PROJECTS                   = "projects"
-	COLLECTION_PROJECT_COLLECTIONS        = "project_collections"
-	COLLECTION_PROJECT_PAGES              = "project_pages"
-	COLLECTION_PROJECT_COLLECTION_FIELDS  = "project_collection_fields"
-	COLLECTION_PROJECT_COLLECTION_RECORDS = "project_collection_records"
-	COLLECTION_SETTINGS                   = "settings"
-)
-
 type AccessKeyToken struct {
 	ID           string    `bun:"id,pk,notnull"`
 	CollectionID string    `bun:"collection_id,notnull"`

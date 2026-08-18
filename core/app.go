@@ -2,8 +2,8 @@ package core
 
 import (
 	"context"
-	"database/sql"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -16,32 +16,241 @@ import (
 	"github.com/a-h/templ"
 	"github.com/ashish9868/rapidbackend/constants"
 	"github.com/ashish9868/rapidbackend/core/respository"
-	"github.com/ashish9868/rapidbackend/core/services"
-	"github.com/ashish9868/rapidbackend/models"
+	"github.com/ashish9868/rapidbackend/middlewares"
 	"github.com/ashish9868/rapidbackend/utils"
-	"github.com/gin-gonic/gin"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/xid"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"github.com/uptrace/bun/extra/bundebug"
-	_ "modernc.org/sqlite"
 )
 
+var schema = `
+CREATE TABLE superadmins (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email_verified_at DATETIME,
+    is_active BOOLEAN DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE projects (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    settings JSON,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE users (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+
+    project_id VARCHAR(255),
+
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255),
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+
+    email_verified_at DATETIME NOT NULL,
+    is_active BOOLEAN DEFAULT 0,
+
+    permissions_json JSON,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT unq_project_email
+        UNIQUE (project_id, email),
+
+    FOREIGN KEY (project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE
+);
+
+
+CREATE TABLE access_key_tokens (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+
+    collection_id VARCHAR(255) NOT NULL,
+    collection VARCHAR(255) NOT NULL,
+
+    access_token VARCHAR(255),
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE project_collections (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+
+    project_id VARCHAR(255) NOT NULL,
+
+    name VARCHAR(255),
+    type VARCHAR(255) DEFAULT 'base',
+    sort_order INTEGER DEFAULT 0,
+    required BOOLEAN DEFAULT 0,
+
+    rules JSON,
+    options JSON,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE
+);
+
+
+CREATE TABLE project_collection_fields (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+
+    collection_id VARCHAR(255) NOT NULL,
+
+    name VARCHAR(255),
+    type VARCHAR(255) DEFAULT 'base',
+
+    is_required BOOLEAN DEFAULT 0,
+    is_indexed BOOLEAN DEFAULT 0,
+    is_unique BOOLEAN DEFAULT 0,
+    is_sortable BOOLEAN DEFAULT 0,
+    is_filterable BOOLEAN DEFAULT 0,
+
+    options JSON,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (collection_id)
+        REFERENCES project_collections(id)
+        ON DELETE CASCADE
+);
+
+
+CREATE TABLE project_collection_records (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+
+    collection_id VARCHAR(255) NOT NULL,
+
+    data JSON,
+
+    version INTEGER DEFAULT 1,
+
+    name VARCHAR(255),
+    type VARCHAR(255) DEFAULT 'base',
+
+    is_required BOOLEAN DEFAULT 0,
+    is_indexed BOOLEAN DEFAULT 0,
+    is_unique BOOLEAN DEFAULT 0,
+    is_sortable BOOLEAN DEFAULT 0,
+    is_filterable BOOLEAN DEFAULT 0,
+
+    options JSON,
+
+    created_by_id VARCHAR(255) NOT NULL,
+    updated_by_id VARCHAR(255) NOT NULL,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (collection_id)
+        REFERENCES project_collections(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (created_by_id)
+        REFERENCES users(id),
+
+    FOREIGN KEY (updated_by_id)
+        REFERENCES users(id)
+);
+
+
+CREATE TABLE project_pages (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+
+    project_id VARCHAR(255) NOT NULL,
+
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+
+    slug VARCHAR(255) NOT NULL UNIQUE,
+
+    settings JSON,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT unq_project_page
+        UNIQUE (project_id, title),
+
+    FOREIGN KEY (project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE
+);
+
+
+CREATE TABLE email_templates (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+
+    name VARCHAR(255) UNIQUE,
+    description TEXT,
+
+    is_system_template BOOLEAN DEFAULT 1,
+
+    html_content TEXT,
+    text_content TEXT,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE settings (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+
+    project_id VARCHAR(255),
+
+    value TEXT,
+
+    created_by_id VARCHAR(255) NOT NULL,
+    updated_by_id VARCHAR(255) NOT NULL,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (project_id)
+        REFERENCES projects(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (created_by_id)
+        REFERENCES users(id),
+
+    FOREIGN KEY (updated_by_id)
+        REFERENCES users(id)
+);
+`
+
 type App struct {
-	Bun            *bun.DB
-	Gin            *gin.Engine
+	RootRouter     *http.ServeMux
+	DB             *sqlx.DB
 	FeFs           *fs.FS
 	Version        *string
-	AuthService    *services.AuthService
 	BaseRepository *respository.BaseRepository
 	AuthRepository *respository.AuthRepository
 }
 
 type ResourceAction struct {
-	Handler     func(ctx *gin.Context, app *App)
-	Middlewares []gin.HandlerFunc
+	Handler     func(w http.ResponseWriter, r *http.Request, app *App)
+	Middlewares []middlewares.Middleware
 }
 type ResourceHandler struct {
 	Index      *ResourceAction
@@ -53,15 +262,6 @@ type ResourceHandler struct {
 	Delete     *ResourceAction
 }
 
-func NoCacheMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Header("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
-		c.Header("Pragma", "no-cache")
-		c.Header("Expires", time.Unix(0, 0).Format(http.TimeFormat)) // Thu, 01 Jan 1970 00:00:00 GMT
-		c.Next()
-	}
-}
-
 func NewApp(embed embed.FS) *App {
 
 	time.Local = time.UTC
@@ -71,7 +271,7 @@ func NewApp(embed embed.FS) *App {
 	env_data := []string{
 		fmt.Sprintf(`PORT=%d`, constants.DEFAULT_PORT),
 		fmt.Sprintf(`DATA_DIR=%s`, "app_data"),
-		fmt.Sprintf(`BUNDEBUG=%d`, 1),
+		fmt.Sprintf(`DEBUG=%d`, 1),
 		fmt.Sprintf(`GIN_MODE=%s`, "release"),
 		fmt.Sprintf(`ENCRYPTION_KEY=%s`, utils.HashPassword(xid.New().String())),
 	}
@@ -100,7 +300,7 @@ func NewApp(embed embed.FS) *App {
 	}.Encode()
 
 	// Open database
-	sqldb, err := sql.Open("sqlite", dsn)
+	sqldb, err := sqlx.Connect("sqlite3", dsn)
 	if err != nil {
 		slog.Error(err.Error())
 		panic(err)
@@ -109,41 +309,25 @@ func NewApp(embed embed.FS) *App {
 	sqldb.SetMaxOpenConns(10)
 	sqldb.SetMaxIdleConns(5)
 
-	// Create Bun instance
-	db := bun.NewDB(sqldb, sqlitedialect.New())
-
-	db.AddQueryHook(
-		bundebug.NewQueryHook(
-			bundebug.WithEnabled(false),
-			bundebug.FromEnv("BUNDEBUG"),
-		),
-	)
-	gin.SetMode(utils.ToString(utils.SafeEnvGet("GIN_MODE", gin.DebugMode)))
-	engine := gin.Default()
-	engine.Use(NoCacheMiddleware())
-
-	baseRepository := &respository.BaseRepository{DB: db}
+	baseRepository := &respository.BaseRepository{DB: sqldb}
+	rootRouter := &http.ServeMux{}
 	app := &App{
-		Bun:            db,
-		Gin:            engine,
+		RootRouter:     rootRouter,
+		DB:             sqldb,
 		FeFs:           utils.SubFs(embed, "static"),
-		AuthService:    services.NewAuthService(db),
 		BaseRepository: baseRepository,
 		AuthRepository: &respository.AuthRepository{BaseRepository: baseRepository},
 	}
-	app.InitializeSystem()
+	app.serveStatic()
+	app.serveNoRoute()
+	app.initializeSystem()
 	fmt.Printf("APP will start on PORT: %s\n\n", utils.SafeEnvGet("PORT", strconv.Itoa(constants.DEFAULT_PORT)))
 	return app
 }
 
-func (app *App) ResourceRoutes(name string, group *gin.RouterGroup, handler ResourceHandler, middlewares ...gin.HandlerFunc) {
+func (app *App) ResourceRoutes(name string, group *http.ServeMux, handler ResourceHandler, _middlewares ...middlewares.Middleware) {
 	base := "/" + strings.Trim(name, "/")
-	if handler.Index != nil {
-		group.Use(append(middlewares, handler.Index.Middlewares...)...)
-		group.GET(base, func(ctx *gin.Context) {
-			handler.Index.Handler(ctx, app)
-		})
-	}
+
 	id_segment := ""
 	parts := strings.Split(base, "/")
 	if len(parts) > 0 {
@@ -151,184 +335,106 @@ func (app *App) ResourceRoutes(name string, group *gin.RouterGroup, handler Reso
 	}
 
 	id_segment = id_segment + "_id"
+
+	if handler.Index != nil {
+		route := fmt.Sprintf("GET %s", base)
+		utils.LogF("Registering route : %s", route)
+		handlers := append(_middlewares, handler.Index.Middlewares...)
+		group.Handle(route, middlewares.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler.Index.Handler(w, r, app)
+		}), handlers...))
+	}
+
 	if handler.Show != nil {
-		group.Use(append(middlewares, handler.Show.Middlewares...)...)
-		group.GET(base+id_segment, func(ctx *gin.Context) {
-			handler.Show.Handler(ctx, app)
-		})
+		route := fmt.Sprintf("GET %s/:%s", base, id_segment)
+		utils.LogF("Registering route : %s", route)
+		handlers := append(_middlewares, handler.Show.Middlewares...)
+		group.Handle(route, middlewares.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler.Show.Handler(w, r, app)
+		}), handlers...))
+
 	}
 
 	if handler.Create != nil {
-		group.Use(append(middlewares, handler.Create.Middlewares...)...)
-		group.POST(base, func(ctx *gin.Context) {
-			handler.Create.Handler(ctx, app)
-		})
+		route := fmt.Sprintf("POST %s", base)
+		utils.LogF("Registering route : %s", route)
+		handlers := append(_middlewares, handler.Create.Middlewares...)
+		group.Handle(route, middlewares.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler.Create.Handler(w, r, app)
+		}), handlers...))
+
 	}
 
 	if handler.CreateForm != nil {
-		group.Use(append(middlewares, handler.CreateForm.Middlewares...)...)
-		group.GET(base, func(ctx *gin.Context) {
-			handler.CreateForm.Handler(ctx, app)
-		})
+		route := fmt.Sprintf("GET %s/create", base)
+		utils.LogF("Registering route : %s", route)
+		handlers := append(_middlewares, handler.CreateForm.Middlewares...)
+		group.Handle(route, middlewares.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler.CreateForm.Handler(w, r, app)
+		}), handlers...))
 	}
 
 	if handler.Update != nil {
-		group.Use(append(middlewares, handler.Update.Middlewares...)...)
-		group.PUT(base+id_segment, func(ctx *gin.Context) {
-			handler.Update.Handler(ctx, app)
-		})
-		group.PATCH(base+id_segment, func(ctx *gin.Context) {
-			handler.Update.Handler(ctx, app)
-		})
+		route := fmt.Sprintf("PUT %s/:%s", base, id_segment)
+		route_patch := fmt.Sprintf("PATCH %s/:%s", base, id_segment)
+		utils.LogF("Registering route : %s, %s", route, route_patch)
+
+		handlers := append(_middlewares, handler.Update.Middlewares...)
+		group.Handle(route, middlewares.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler.Update.Handler(w, r, app)
+		}), handlers...))
+
+		group.Handle(route_patch, middlewares.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler.Update.Handler(w, r, app)
+		}), handlers...))
 	}
 
 	if handler.UpdateForm != nil {
-		group.Use(append(middlewares, handler.UpdateForm.Middlewares...)...)
-		group.GET(base+id_segment, func(ctx *gin.Context) {
-			handler.UpdateForm.Handler(ctx, app)
-		})
+		route := fmt.Sprintf("GET %s/:%s/update", base, id_segment)
+		utils.LogF("Registering route : %s", route)
+		handlers := append(_middlewares, handler.UpdateForm.Middlewares...)
+		group.Handle(route, middlewares.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler.UpdateForm.Handler(w, r, app)
+		}), handlers...))
 	}
 
 	if handler.Delete != nil {
-		group.Use(append(middlewares, handler.Delete.Middlewares...)...)
-		group.DELETE(base+id_segment, func(ctx *gin.Context) {
-			handler.Delete.Handler(ctx, app)
-		})
+		route := fmt.Sprintf("DELETE %s/:%s", base, id_segment)
+		utils.LogF("Registering route : %s", route)
+		handlers := append(_middlewares, handler.Delete.Middlewares...)
+		group.Handle(route, middlewares.Chain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler.Delete.Handler(w, r, app)
+		}), handlers...))
 	}
 
 }
 
-func (app *App) WithTransaction(ctx context.Context, db *bun.DB, fn func(tx bun.Tx) error) error {
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if p := recover(); p != nil {
-			_ = tx.Rollback()
-			panic(p)
-		}
-	}()
-
-	if err := fn(tx); err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-
-	return tx.Commit()
+func (app *App) initializeSystem() {
+	app.DB.Exec(schema)
 }
 
-func (app *App) InitializeSystem() {
-	app.Bun.NewCreateTable().Model((*models.Project)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.Superadmin)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.User)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.AccessKeyToken)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.ProjectPage)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.ProjectCollection)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.ProjectCollectionField)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.ProjectCollectionRecord)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.EmailTemplate)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-	app.Bun.NewCreateTable().Model((*models.SystemSetting)(nil)).IfNotExists().WithForeignKeys().Exec(context.Background())
-}
-
-func (app *App) ServeStatic() {
+func (app *App) serveStatic() {
 	if app.FeFs != nil {
-		app.Gin.StaticFS("/static", http.FS(*app.FeFs))
+		fs := http.FileServer(http.FS(*app.FeFs))
+		app.RootRouter.Handle("/static/", http.StripPrefix("/static", fs))
 	}
 }
 
-func (app *App) ServeNoRoute() {
-	app.Gin.NoRoute(app.NewAuthMiddleWare(false, true), func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusPermanentRedirect, "/login")
-	})
+func (app *App) serveNoRoute() {
+	app.RootRouter.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
+	}))
 }
 
-func (app *App) ErrorJson(body any, err error) gin.H {
-	return gin.H{
-		"body":   body,
-		"errors": err,
+func (app *App) BindSafely(w http.ResponseWriter, r *http.Request, obj any) error {
+	contentType := r.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "application/json") {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		decoder := json.NewDecoder(r.Body)
+		decoder.DisallowUnknownFields()
+		return decoder.Decode(obj)
 	}
-}
-
-func (app *App) SetAuthCookie(ctx *gin.Context, value string, maxAge int) {
-	if maxAge < 60 {
-		token, _ := ctx.Cookie(gin.AuthUserKey)
-		if len(token) > 0 {
-			app.Bun.NewDelete().Model(&models.AccessKeyToken{}).Where("access_token = ?", token).Exec(context.Background())
-		}
-	}
-	ctx.SetCookie(gin.AuthUserKey, value, maxAge, "/", ctx.Request.Host, false, true)
-}
-
-func (app *App) HttpUnauthorized(ctx *gin.Context) {
-	val, _ := ctx.Cookie(gin.AuthUserKey)
-	app.SetAuthCookie(ctx, "", -1)
-	if app.IsHTMX(ctx) {
-		ctx.Header("HX-Redirect", "/#/")
-		ctx.Status(http.StatusUnauthorized)
-	} else {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"Uauthorized": true,
-			"Redirect":    len(val) > 0,
-		})
-	}
-	ctx.Abort()
-}
-
-func (app *App) IsHTMX(ctx *gin.Context) bool {
-	return ctx.GetHeader("HX-Request") == "true"
-}
-
-func (app *App) NewAuthMiddleWare(throw401 bool, silent bool) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		token, err := ctx.Cookie(gin.AuthUserKey)
-		if err != nil {
-			token = ctx.GetHeader("Authorization")
-			if !strings.HasPrefix(token, "Bearer ") && !silent {
-				app.HttpUnauthorized(ctx)
-				return
-			}
-			token = strings.TrimPrefix(token, "Bearer ")
-			if len(token) < 1 && !silent {
-				app.HttpUnauthorized(ctx)
-				return
-			}
-		}
-
-		user := app.AuthService.GetUserByToken(token)
-		if user != nil {
-			ctx.Set(gin.AuthUserKey, user)
-		}
-		if user == nil && throw401 && !silent {
-			app.HttpUnauthorized(ctx)
-			return
-		}
-		ctx.Next()
-	}
-
-}
-
-func (app *App) NewPublicMiddleware() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		_, exists := ctx.Get(gin.AuthUserKey)
-		if !exists {
-			ctx.Next()
-			return
-		}
-		ctx.Header("HX-Redirect", "/#/dashboard")
-		ctx.Status(http.StatusTemporaryRedirect)
-		ctx.Abort()
-	}
-}
-
-func (app *App) BindSafely(ctx *gin.Context, obj any) error {
-	switch ctx.ContentType() {
-	case "application/json":
-		return ctx.ShouldBindJSON(obj)
-	default:
-		return ctx.ShouldBind(obj)
-	}
+	return r.ParseForm()
 }
 
 type Response struct {
@@ -340,36 +446,9 @@ type Response struct {
 	FormData   any
 }
 
-func (app *App) SendResponse(ctx *gin.Context, response Response) {
-	utils.PrintFiles(*app.FeFs)
-	formData := response.FormData
-	if formData == nil {
-		formData = map[string]any{}
-	}
-	templateData := gin.H{
-		"data":   response.Data,
-		"errors": app.FormatErrors(response.Error),
-		"code":   response.Code,
-		"form":   formData,
-	}
-	if app.IsHTMX(ctx) {
-		if len(response.HxRedirect) > 0 {
-			ctx.Header("HX-Redirect", response.HxRedirect)
-			ctx.Status(http.StatusTemporaryRedirect)
-			return
-		} else {
-			ctx.HTML(200, response.View, templateData)
-			return
-		}
-	} else {
-		ctx.JSON(response.Code, templateData)
-	}
-	ctx.Abort()
-}
-
-func (app *App) RenderComponent(ctx *gin.Context, component templ.Component) {
-	ctx.Header("Content-Type", "text/html; charset=utf-8")
-	component.Render(ctx, ctx.Writer)
+func (app *App) RenderComponent(w http.ResponseWriter, component templ.Component) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	component.Render(context.Background(), w)
 }
 
 func (app *App) FormatErrors(err error) map[string]any {
