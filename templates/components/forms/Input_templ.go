@@ -10,10 +10,11 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
+	"github.com/ashish9868/rapidbackend/utils"
 	"strings"
 )
 
-func Input(props InputBaseProps) templ.Component {
+func Input(formId string, props InputBaseProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -46,12 +47,15 @@ func Input(props InputBaseProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
+			varient := utils.Coalesce(props.Varient, "default")
+			showVar := props.BuildSignalVar(formId, "show")
+			showVarAccess := props.BuildSignalAccessVar(formId, "show")
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, AppendAttrs([]Attr{
-				{Name: fmt.Sprintf("data-signals:show_%s", props.Name), Value: "false", Hide: props.Type != "password"},
+				{Name: showVar, Value: "false", Hide: props.Type != "password"},
 				{Name: "class", Value: "flex justify-between py-1 relative"},
 			}))
 			if templ_7745c5c3_Err != nil {
@@ -72,7 +76,7 @@ func Input(props InputBaseProps) templ.Component {
 				}
 				templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, props.MakeAttrs(Attr{
 					Name:  "class",
-					Value: "w-full outline-none focus-none text-white text-xs py-1 resize-none overflow-hidden",
+					Value: fmt.Sprintf("w-full outline-none focus-none text-%s-text text-xs py-1 resize-none overflow-hidden", varient),
 				}))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -84,7 +88,7 @@ func Input(props InputBaseProps) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Value)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/components/forms/Input.templ`, Line: 25, Col: 18}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/components/forms/Input.templ`, Line: 31, Col: 18}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -100,8 +104,8 @@ func Input(props InputBaseProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, props.MakeAttrs([]Attr{
-					{Name: "class", Value: "w-full outline-none focus-none text-white text-xs py-1"},
-					{Name: "data-attr:type", Value: fmt.Sprintf("$show_%s ? 'text':'password'", props.Name), Hide: props.Type != "password"},
+					{Name: "class", Value: fmt.Sprintf("w-full outline-none focus-none text-%s-text text-xs py-1", varient)},
+					{Name: "data-attr:type", Value: fmt.Sprintf("%s ? 'text':'password'", showVarAccess), Hide: props.Type != "password"},
 				}...))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -122,8 +126,8 @@ func Input(props InputBaseProps) templ.Component {
 				}
 				templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, AppendAttrs([]Attr{
 					{Name: "type", Value: "button"},
-					{Name: "class", Value: "text-white"},
-					{Name: "data-on:click", Value: fmt.Sprintf("$show_%s = !$show_%s", props.Name, props.Name)},
+					{Name: "class", Value: fmt.Sprintf("text-%s-text", varient)},
+					{Name: "data-on:click", Value: fmt.Sprintf("%s = !%s", showVarAccess, showVarAccess)},
 				}))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -133,13 +137,13 @@ func Input(props InputBaseProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				templ_7745c5c3_Err = Icon("eye", []Attr{
-					{Name: "data-show", Value: fmt.Sprintf("!$show_%s", props.Name)},
+					{Name: "data-show", Value: fmt.Sprintf("!%s", showVarAccess)},
 				}...).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				templ_7745c5c3_Err = Icon("eye-off", []Attr{
-					{Name: "data-show", Value: fmt.Sprintf("$show_%s", props.Name)},
+					{Name: "data-show", Value: fmt.Sprintf("%s", showVarAccess)},
 				}...).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -155,7 +159,7 @@ func Input(props InputBaseProps) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = InputBase(props).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = InputBase(formId, props).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

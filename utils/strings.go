@@ -7,13 +7,13 @@ import (
 	"github.com/jinzhu/inflection"
 )
 
-func Coalesce(vals ...interface{}) interface{} {
+func Coalesce(vals ...interface{}) string {
 	for _, v := range vals {
 		if IsTruthy(v) {
-			return v
+			return ToString(v)
 		}
 	}
-	return nil
+	return ""
 }
 
 func ToJSON(data any) string {

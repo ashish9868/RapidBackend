@@ -11,15 +11,57 @@ templ BaseLayout() {
 			<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 			<style type="text/tailwindcss">
 				@theme {
-					/* Semantic colors */
-					--color-primary: #000000;      /* sky-500 */
-					--color-success: #22c55e;      /* green-500 */
-					--color-warning: #f59e0b;      /* amber-500 */
-					--color-danger: #ef4444;       /* red-500 */
+					/* Primary */
+					--color-primary: #1976d2;
+					--color-primary-light: #42a5f5;
+					--color-primary-dark: #1565c0;
+					--color-primary-default: #1976d2;
+					--color-primary-text: #ffffff;
+
+					/* Secondary */
+					--color-secondary: #9c27b0;
+					--color-secondary-light: #ba68c8;
+					--color-secondary-dark: #7b1fa2;
+					--color-secondary-default: #9c27b0;
+					--color-secondary-text: #ffffff;
+
+					/* Success */
+					--color-success: #2e7d32;
+					--color-success-light: #4caf50;
+					--color-success-dark: #1b5e20;
+					--color-success-default: #2e7d32;
+					--color-success-text: #ffffff;
+
+					/* Warning */
+					--color-warning: #ed6c02;
+					--color-warning-light: #ff9800;
+					--color-warning-dark: #e65100;
+					--color-warning-default: #ed6c02;
+					--color-warning-text: #ffffff;
+
+					/* Danger / Error */
+					--color-danger: #d32f2f;
+					--color-danger-light: #ef5350;
+					--color-danger-dark: #c62828;
+					--color-danger-default: #d32f2f;
+					--color-danger-text: #ffffff;
+
+					/* Info */
+					--color-info: #0288d1;
+					--color-info-light: #29b6f6;
+					--color-info-dark: #01579b;
+					--color-info-default: #0288d1;
+					--color-info-text: #ffffff;
+
+					/* Neutral / Default */
+					--color-default: #ffffff;
+					--color-default-light: #fafafa;
+					--color-default-dark: #e0e0e0;
+					--color-default-text: #212121
 				}
 			</style>
 		</head>
-		<body class="bg-[#1c1c1c]">
+		<body class="bg-default-text">
 			{ children... }
 		</body>
 	</html>

@@ -9,8 +9,27 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import "fmt"
+import "github.com/ashish9868/rapidbackend/utils"
+import "strings"
 
-func Form(id, action, method string, attrs ...Attr) templ.Component {
+type FormProps struct {
+	ID      string
+	Action  string
+	Method  string
+	Fields  []InputBaseProps
+	Attrs   []Attr
+	Signals templ.Attributes
+}
+
+func (f *FormProps) BuildSignalAccessVar(formId string, key string) string {
+	return fmt.Sprintf("$%s_%s", formId, key)
+}
+
+func (f *FormProps) BuildSignalVar(formId string, key string) string {
+	return fmt.Sprintf("data-signals:%s_%s", formId, key)
+}
+
+func Form(formProps *FormProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -35,13 +54,17 @@ func Form(id, action, method string, attrs ...Attr) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, AppendAttrs(attrs, []Attr{
-			{Name: "id", Value: id},
-			{Name: "action", Value: action},
-			{Name: "method", Value: method},
-			{Name: "class", Value: "flex flex-col gap-3 w-full"},
+		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, formProps.Signals)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, AppendAttrs(formProps.Attrs, []Attr{
+			{Name: "id", Value: formProps.ID},
+			{Name: "action", Value: formProps.Action},
+			{Name: "method", Value: utils.ToString(utils.Coalesce(formProps.Method, "POST"))},
+			{Name: "class", Value: "p-1 grid grid-cols-12 gap-3 w-full"},
 			{Name: "autocomplete", Value: "off"},
-			{Name: "data-on:submit__prevent", Value: fmt.Sprintf("@%s('%s',  {contentType: 'form'})", method, action)},
+			{Name: "data-on:submit__prevent", Value: fmt.Sprintf("@%s('%s',  {contentType: 'form'})", strings.ToLower(utils.ToString(utils.Coalesce(formProps.Method, "POST"))), formProps.Action)},
 		}...))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -50,11 +73,39 @@ func Form(id, action, method string, attrs ...Attr) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templ_7745c5c3_Var1.Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		for _, field := range formProps.Fields {
+			var templ_7745c5c3_Var2 = []any{fmt.Sprintf("col-span-%s", utils.ToString(utils.Coalesce(field.ItemSize, 12)))}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var3 string
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var2).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/components/forms/form.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = field.Render(formProps.ID).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,11 +1,11 @@
 package forms
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/a-h/templ"
+	"github.com/ashish9868/rapidbackend/utils"
 )
 
 const (
@@ -17,7 +17,8 @@ const (
 	DISPLAY_DATETIME_FORMAT = "m/d/Y H:i"
 )
 
-type InputBaseProps struct {
+type FormField struct {
+	ID          string
 	Label       string
 	Type        string
 	Name        string
@@ -37,6 +38,60 @@ type InputBaseProps struct {
 	Multiple    bool
 }
 
+type InputBaseProps struct {
+	ID              string
+	Varient         string
+	Loading         bool
+	Label           string
+	Type            string
+	Name            string
+	Placeholder     string
+	Value           string
+	Required        bool
+	LabelIcon       string
+	IconBefore      string
+	IconAfter       string
+	Error           string
+	HelperText      string
+	ReadOnly        bool
+	Disabled        bool
+	Attrs           []Attr
+	Selected        []string
+	Options         []SelectOption
+	Multiple        bool
+	CustomComponent templ.Component
+	ItemSize        int
+	Signals         templ.Attributes
+}
+
+func (f *InputBaseProps) Render(formId string) templ.Component {
+	switch f.Type {
+	case "select":
+		return Select(formId, *f)
+	case "file":
+		return FileInput(formId, *f)
+	case "switch":
+		return Switch(formId, *f)
+	case "button", "submit", "reset":
+		return Button(formId, *f)
+	case "custom":
+		return f.CustomComponent
+	}
+	return Input(formId, *f)
+}
+
+func (f *InputBaseProps) BuildID(formId string) string {
+	return fmt.Sprintf("%s_%s", formId, utils.Coalesce(f.ID, f.Name))
+}
+
+func (f *InputBaseProps) BuildSignalAccessVar(formId string, key string) string {
+	return fmt.Sprintf("$%s_%s", f.BuildID(formId), key)
+}
+
+func (f *InputBaseProps) BuildSignalVar(formId string, key string) string {
+	return fmt.Sprintf("data-signals:%s_%s", f.BuildID(formId), key)
+}
+
 type SelectOption struct {
 	Label    string
 	Subtitle string
@@ -49,24 +104,6 @@ type Attr struct {
 	Name  string
 	Value string
 	Hide  bool
-}
-
-type ButtonBaseProps struct {
-	Type      string
-	Loading   bool
-	StartIcon string
-	EndIcon   string
-	Disabled  bool
-	Label     string
-	Attrs     []Attr
-}
-
-func (b *ButtonBaseProps) MakeAttrs(moreAttrs ...Attr) templ.Attributes {
-	attrs := append(b.Attrs, moreAttrs...)
-	return AppendAttrs(attrs, []Attr{
-		{Name: "disabled", Hide: !b.Disabled},
-		{Name: "type", Value: ifElse(b.Type, "button")},
-	}...)
 }
 
 func (b *InputBaseProps) MakePlaceholder() string {
@@ -85,6 +122,12 @@ func (b *InputBaseProps) MakePlaceholder() string {
 
 func (b *InputBaseProps) MakeAttrs(moreAttrs ...Attr) templ.Attributes {
 	attrs := append(b.Attrs, moreAttrs...)
+	if b.Type == "button" {
+		return AppendAttrs(attrs, []Attr{
+			{Name: "disabled", Hide: !b.Disabled},
+			{Name: "type", Value: utils.Coalesce(b.Type, "button")},
+		}...)
+	}
 	isDateOrTimeField := strings.Contains(b.Type, "date") || strings.Contains(b.Type, "time")
 	attrs = append(attrs, []Attr{
 		{Name: "disabled", Hide: !b.Disabled},
@@ -92,7 +135,6 @@ func (b *InputBaseProps) MakeAttrs(moreAttrs ...Attr) templ.Attributes {
 		{Name: "required", Hide: !b.Required},
 		{Name: "autocomplete", Value: "off"},
 		{Name: "name", Value: fmt.Sprintf(`%s`, b.Name)},
-		{Name: "id", Value: fmt.Sprintf(`input_id_%s`, b.Name)},
 		{Name: "placeholder", Value: b.MakePlaceholder()},
 	}...)
 	if isDateOrTimeField {
@@ -108,8 +150,8 @@ func (b *InputBaseProps) MakeAttrs(moreAttrs ...Attr) templ.Attributes {
 	} else if strings.EqualFold(getAttribute(attrs, "type", b.Type), "radio") {
 		attrs = append(attrs, Attr{Name: "type", Value: "radio"})
 	} else {
-		attrs = append(attrs, Attr{Name: "type", Value: ifElse(b.Type, "text")})
-		attrs = append(attrs, Attr{Name: "value", Value: ifElse(b.Value, "")})
+		attrs = append(attrs, Attr{Name: "type", Value: utils.Coalesce(b.Type, "text")})
+		attrs = append(attrs, Attr{Name: "value", Value: utils.Coalesce(b.Value, "")})
 	}
 
 	if strings.EqualFold(b.Type, "password") {
@@ -148,34 +190,11 @@ func AppendAttrs(attrs []Attr, list ...Attr) templ.Attributes {
 	return result
 }
 
-func ifElse(val string, returnVal string) string {
-	if len(val) > 0 {
-		return val
-	}
-	return returnVal
-}
-
 func getAttribute(attrs []Attr, key string, defaultValue string) string {
 	for _, attr := range attrs {
 		if strings.EqualFold(attr.Name, key) {
-			return ifElse(attr.Value, defaultValue)
+			return utils.Coalesce(attr.Value, defaultValue)
 		}
 	}
 	return defaultValue
-}
-
-func PullMapValue(values_map map[string]any, key string) string {
-	value, exists := values_map[key]
-	if exists {
-		return fmt.Sprintf("%s", value)
-	}
-	return ""
-}
-
-func ToJson(value any) string {
-	bytes, err := json.Marshal(value)
-	if err != nil {
-		return err.Error()
-	}
-	return string(bytes[:])
 }

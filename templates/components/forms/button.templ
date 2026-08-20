@@ -1,22 +1,26 @@
 package forms
 
-templ Button(props ButtonBaseProps) {
-     <button
-     {props.MakeAttrs(Attr{
+import "fmt"
+import "github.com/ashish9868/rapidbackend/utils"
+
+templ Button(formId string, props InputBaseProps) {
+	{{ varient := utils.Coalesce(props.Varient, "default") }}
+	<button
+		{ props.MakeAttrs(Attr{
       Name: "class",
-      Value: "w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed outline-none focus:outline-none bg-primary opacity-80 text-white hover:opacity-90 focus:ring-2 focus:ring-primary/80",
-     })...}
-    >
-      if props.Loading {
-        @Spinner()
-      } else {
-         @Icon(props.StartIcon)
-      }
-      if (len(props.Label) > 0){
-        <span>{props.Label}</span>
-      } else {
-        {children...}
-      }
-      @Icon(props.EndIcon)
-    </button>
+      Value: fmt.Sprintf("w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-bold transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed outline-none focus:outline-none bg-%s-light border-1 border-%s-light text-%s-text hover:border-%s-dark focus:ring-2 focus:ring-%s", varient, varient, varient, varient, varient),
+     })... }
+	>
+		if props.Loading {
+			@Spinner()
+		} else {
+			@Icon(props.IconBefore)
+		}
+		if (len(props.Label) > 0) {
+			<span>{ props.Label }</span>
+		} else {
+			{ children... }
+		}
+		@Icon(props.IconAfter)
+	</button>
 }

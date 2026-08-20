@@ -1,18 +1,42 @@
 package forms
 
 import "fmt"
+import "github.com/ashish9868/rapidbackend/utils"
+import "strings"
 
-templ Form(id, action, method string, attrs ...Attr) {
+type FormProps struct {
+	ID      string
+	Action  string
+	Method  string
+	Fields  []InputBaseProps
+	Attrs   []Attr
+	Signals templ.Attributes
+}
+
+func (f *FormProps) BuildSignalAccessVar(formId string, key string) string {
+	return fmt.Sprintf("$%s_%s", formId, key)
+}
+
+func (f *FormProps) BuildSignalVar(formId string, key string) string {
+	return fmt.Sprintf("data-signals:%s_%s", formId, key)
+}
+
+templ Form(formProps *FormProps) {
 	<form
-		{ AppendAttrs(attrs, []Attr{
-        {Name: "id", Value: id},
-        {Name: "action", Value: action},
-        {Name: "method", Value: method},
-        {Name: "class", Value: "flex flex-col gap-3 w-full"},
+		{ formProps.Signals... }
+		{ AppendAttrs(formProps.Attrs, []Attr{
+        {Name: "id", Value: formProps.ID},
+        {Name: "action", Value: formProps.Action},
+        {Name: "method", Value: utils.ToString(utils.Coalesce(formProps.Method, "POST"))},
+        {Name: "class", Value: "p-1 grid grid-cols-12 gap-3 w-full"},
         {Name: "autocomplete", Value: "off"},
-        {Name: "data-on:submit__prevent", Value: fmt.Sprintf("@%s('%s',  {contentType: 'form'})", method, action)},
+        {Name: "data-on:submit__prevent", Value: fmt.Sprintf("@%s('%s',  {contentType: 'form'})", strings.ToLower(utils.ToString(utils.Coalesce(formProps.Method, "POST"))), formProps.Action)},
     }...)... }
 	>
-		{ children... }
+		for _, field := range formProps.Fields {
+			<div class={ fmt.Sprintf("col-span-%s", utils.ToString(utils.Coalesce(field.ItemSize, 12))) }>
+				@field.Render(formProps.ID)
+			</div>
+		}
 	</form>
 }

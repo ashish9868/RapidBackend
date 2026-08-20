@@ -1,15 +1,17 @@
 package utils
 
-import "reflect"
+import (
+	"reflect"
+)
 
-func SafeGet(row map[string]any, key string, defaultVal any) any {
+func SafeGetMapValue(row map[string]any, key string, defaultVal any) string {
 	if row == nil {
-		return defaultVal
+		return ToString(defaultVal)
 	}
 	if val, ok := row[key]; ok && val != nil {
-		return val
+		return ToString(val)
 	}
-	return defaultVal
+	return ToString(defaultVal)
 }
 
 func MergeMap(base interface{}, values ...interface{}) (map[string]interface{}, error) {

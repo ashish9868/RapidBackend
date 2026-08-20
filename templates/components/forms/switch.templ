@@ -2,8 +2,8 @@ package forms
 
 import "fmt"
 
-templ Switch(props InputBaseProps) {
-	@InputBase(props) {
+templ Switch(formId string, props InputBaseProps) {
+	@InputBase(formId, props) {
 		<div
 			{ AppendAttrs([]Attr{
                 {Name: fmt.Sprintf("data-signals:checked_%s", props.Name), Value: "false"},

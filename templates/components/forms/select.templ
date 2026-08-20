@@ -1,15 +1,22 @@
 package forms
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/ashish9868/rapidbackend/utils"
+)
 
-templ Select(props InputBaseProps) {
+templ Select(formId string, props InputBaseProps) {
+	{{
+		varient := utils.Coalesce(props.Varient, "default")
+		fieldId := props.BuildID(formId)
+	}}
 	<div
-		class="relative w-full flex flex-col bg-primary/50 hover:bg-primary/60 gap-y-1 px-4 py-2 rounded-lg w-full"
-		data-signals={ fmt.Sprintf(`{"_%s_open":false,"_%s_selected":%s, "_%s_multiple":%t}`, props.Name, props.Name, props.Selected, props.Name, props.Multiple) }
-		data-on:click__outside={ fmt.Sprintf("$_%s_open = false", props.Name) }
+		class={ fmt.Sprintf("relative w-full flex flex-col bg-%s-light hover:bg-%s gap-y-1 px-4 py-2 rounded-lg w-full", varient, varient) }
+		data-signals={ fmt.Sprintf(`{"_%s_open":false,"_%s_selected":%s, "_%s_multiple":%t}`, fieldId, fieldId, props.Selected, fieldId, props.Multiple) }
+		data-on:click__outside={ fmt.Sprintf("$_%s_open = false", fieldId) }
 	>
 		<!-- Selected chips -->
-		<label class="flex text-white font-bold text-xs pt-1" for={ fmt.Sprintf("select_id_%s", props.Name) }>
+		<label class={ fmt.Sprintf("flex text-%s-text font-bold text-xs pt-1", varient) } for={ fmt.Sprintf("select_id_%s", fieldId) }>
 			<div class="flex flex-col gap-2 w-full">
 				<span class="flex gap-2 items-center">
 					@Icon(props.LabelIcon)
@@ -24,22 +31,22 @@ templ Select(props InputBaseProps) {
 			class="flex min-h-14 w-full flex-wrap items-center gap-2 rounded-lg p-2"
 			data-on:click={ fmt.Sprintf(
 				"evt.stopPropagation(); $_%s_open = !$_%s_open",
-				props.Name,
-				props.Name,
+				fieldId,
+				fieldId,
 			) }
 		>
 			for _, option := range props.Options {
 				<div
-					data-class:rounded-full={ fmt.Sprintf("$_%s_multiple", props.Name) }
-					data-class:border={ fmt.Sprintf("$_%s_multiple", props.Name) }
-					data-class:border-neutral-600={ fmt.Sprintf("$_%s_multiple", props.Name) }
-					data-class:px-2={ fmt.Sprintf("$_%s_multiple", props.Name) }
-					data-class:py-2={ fmt.Sprintf("$_%s_multiple", props.Name) }
-					class="flex w-auto items-center gap-2 text-sm text-white"
+					data-class:rounded-full={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					data-class:border={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					data-class:border-neutral-600={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					data-class:px-2={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					data-class:py-2={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					class={ fmt.Sprintf("flex w-auto items-center gap-2 text-sm text-%s-text", varient) }
 					style="display: none"
 					data-show={ fmt.Sprintf(
 						"$_%s_selected.includes('%s')",
-						props.Name,
+						fieldId,
 						option.Value,
 					) }
 				>
@@ -47,11 +54,11 @@ templ Select(props InputBaseProps) {
 					if props.Multiple {
 						<button
 							type="button"
-							class="flex cursor-pointer items-center justify-center rounded-full text-white hover:text-red-700"
+							class={ fmt.Sprintf("flex cursor-pointer items-center justify-center rounded-full text-%s-text hover:text-red-700", varient) }
 							data-on:click={ fmt.Sprintf(
 								"evt.stopPropagation(); $_%s_selected = $_%s_selected.filter(x => x !== '%s');",
-								props.Name,
-								props.Name,
+								fieldId,
+								fieldId,
 								option.Value,
 							) }
 						>
@@ -65,17 +72,17 @@ templ Select(props InputBaseProps) {
 				class="px-1 text-sm text-neutral-500"
 				data-show={ fmt.Sprintf(
 					"$_%s_selected.length === 0",
-					props.Name,
+					fieldId,
 				) }
 				style="display: none"
 			>
-				{ props.Placeholder }
+				{ props.MakePlaceholder() }
 			</span>
 			<!-- Chevron -->
-			<div class="ml-auto shrink-0 text-white">
+			<div class="ml-auto shrink-0 text-%s-text">
 				@Icon("chevron-down", []Attr{
 					{Name: "class", Value: "transition-transform"},
-					{Name: "data-class:rotate-180", Value: fmt.Sprintf("$_%s_open", props.Name)},
+					{Name: "data-class:rotate-180", Value: fmt.Sprintf("$_%s_open", fieldId)},
 				}...)
 			</div>
 		</div>
@@ -84,7 +91,7 @@ templ Select(props InputBaseProps) {
 			class="absolute z-50 mt-2 w-full bg-black overflow-hidden rounded-lg p-2"
 			data-show={ fmt.Sprintf(
 				"$_%s_open",
-				props.Name,
+				fieldId,
 			) }
 		>
 			for _, option := range props.Options {
@@ -94,29 +101,29 @@ templ Select(props InputBaseProps) {
 						if props.Multiple {
 							data-on:click={ fmt.Sprintf(
 								"$_%s_selected.includes('%s') ? $_%s_selected = $_%s_selected.filter(x => x !== '%s') : $_%s_selected = [...$_%s_selected, '%s']; $_%s_open = !$_%s_open",
-								props.Name,
+								fieldId,
 								option.Value,
-								props.Name,
-								props.Name,
+								fieldId,
+								fieldId,
 								option.Value,
-								props.Name,
-								props.Name,
+								fieldId,
+								fieldId,
 								option.Value,
-								props.Name,
-								props.Name,
+								fieldId,
+								fieldId,
 							) }
 						} else {
 							data-on:click={ fmt.Sprintf(
 								"$_%s_selected = ['%s']; $_%s_open = false",
-								props.Name,
+								fieldId,
 								option.Value,
-								props.Name,
+								fieldId,
 							) }
 						}
 					}
 				>
 					<div class="min-w-0 flex-1">
-						<div class="font-semibold text-white">
+						<div class="font-semibold text-%s-text">
 							{ option.Label }
 						</div>
 						if option.Subtitle != "" {
@@ -128,7 +135,7 @@ templ Select(props InputBaseProps) {
 					<!-- Checkmark -->
 					@Icon("check", []Attr{
 						{Name: "style", Value: "display:none;color:white;"},
-						{Name: "data-show", Value: fmt.Sprintf("$_%s_selected.includes('%s')", props.Name, option.Value)},
+						{Name: "data-show", Value: fmt.Sprintf("$_%s_selected.includes('%s')", fieldId, option.Value)},
 					}...)
 				</div>
 			}
@@ -145,7 +152,7 @@ templ Select(props InputBaseProps) {
 				<option
 					{ AppendAttrs([]Attr{
 						{Name: "value", Value: option.Value },
-						{Name: "data-attr:selected", Value: fmt.Sprintf("$_%s_selected.includes('%s')",props.Name,option.Value) },
+						{Name: "data-attr:selected", Value: fmt.Sprintf("$_%s_selected.includes('%s')",fieldId,option.Value) },
 					})... }
 				>{ option.Label }</option>
 			}
