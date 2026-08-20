@@ -1,8 +1,6 @@
 package services
 
 import (
-	"net/http"
-
 	"github.com/ashish9868/rapidbackend/core"
 	respository "github.com/ashish9868/rapidbackend/core/repository"
 	"github.com/ashish9868/rapidbackend/dto"
@@ -20,11 +18,7 @@ func NewAuthService(app *core.App) *authService {
 	return &authService{App: app}
 }
 
-func (a *authService) ValidateLogin(w http.ResponseWriter, r *http.Request, checkSuperadmin bool) (*dto.LoginForm, *models.AccessKeyToken, map[string]any) {
-	form := &dto.LoginForm{}
-	if err := a.App.BindSafely(w, r, form); err != nil {
-		return form, nil, a.App.FormatErrors(err)
-	}
+func (a *authService) ValidateLogin(form *dto.LoginForm, checkSuperadmin bool) (token *models.AccessKeyToken, errors map[string]string) {
 	err := validation.ValidateStruct(form,
 		validation.Field(&form.Email,
 			validation.Required.Error("Email is required"),
@@ -52,12 +46,12 @@ func (a *authService) ValidateLogin(w http.ResponseWriter, r *http.Request, chec
 		if utils.IsTruthy(user.ID) && utils.CheckPassword(user.Password, form.Password) && user.EmailVerifiedAt != nil && user.IsActive {
 			token := a.App.AccessTokenRepository.CreateNewAccessToken(user)
 			if token != nil {
-				return form, token, nil
+				return token, nil
 			}
 		}
-		return form, nil, map[string]any{
+		return nil, map[string]string{
 			"global": "Email and/or password is invalid.",
 		}
 	}
-	return form, nil, a.App.FormatErrors(err)
+	return nil, a.App.FormatErrors(err)
 }

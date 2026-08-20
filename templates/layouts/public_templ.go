@@ -89,7 +89,7 @@ func PublicLayout() templ.Component {
 	})
 }
 
-func RunJs() templ.Component {
+func PrivateLayout() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -110,7 +110,70 @@ func RunJs() templ.Component {
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<script>\n            document.addEventListener(\"DOMContentLoaded\", () => {\n                document.querySelectorAll(\"[data-flatpicker]:not([data-flatpicker-initialized])\")\n                    .forEach((el) => {\n                        const altFormat = el.getAttribute('data-altformat')\n                        const dateFormat = el.getAttribute('data-dateformat')\n                        flatpickr(el, {\n                            altInput: true,\n                            time_24hr: true,\n                            allowInput: true,\n                            altFormat: altFormat ?? \"m/d/Y\",\n                            dateFormat: dateFormat ?? \"Y-m-d\",\n                            enableTime: `${dateFormat}`.includes('H') ? true: false,\n                            noCalendar: `${dateFormat}`.includes('Y') ? false: true,\n                        });\n                        el.dataset.flatpickrInitialized = \"true\";\n                    });\n            });\n    </script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"flex flex-col gap-4 w-full max-w-sm justify-center justify-self-center items-center min-h-screen py-6\"><div class=\"text-white font-bold flex flex-col min-h-[150px] text-center items-center\"><img width=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(100)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layouts/public.templ`, Line: 18, Col: 19}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" src=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue("/static/logo.svg")
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/layouts/public.templ`, Line: 18, Col: 46}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" alt=\"Rapid Backend\"><p>Dashboard</p></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ_7745c5c3_Var5.Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func RunJs() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<script>\n            document.addEventListener(\"DOMContentLoaded\", () => {\n                document.querySelectorAll(\"[data-flatpicker]:not([data-flatpicker-initialized])\")\n                    .forEach((el) => {\n                        const altFormat = el.getAttribute('data-altformat')\n                        const dateFormat = el.getAttribute('data-dateformat')\n                        flatpickr(el, {\n                            altInput: true,\n                            time_24hr: true,\n                            allowInput: true,\n                            altFormat: altFormat ?? \"m/d/Y\",\n                            dateFormat: dateFormat ?? \"Y-m-d\",\n                            enableTime: `${dateFormat}`.includes('H') ? true: false,\n                            noCalendar: `${dateFormat}`.includes('Y') ? false: true,\n                        });\n                        el.dataset.flatpickrInitialized = \"true\";\n                    });\n            });\n    </script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,26 +1,20 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type AccessKeyToken struct {
-	ID           string    `db:"id"`
-	CollectionID string    `db:"collection_id"`
-	Collection   string    `db:"collection"`
-	Token        string    `db:"access_token"`
-	CreatedAt    time.Time `db:"created_at"`
-}
-
-func (a *AccessKeyToken) ToMap() map[string]any {
-	return map[string]any{
-		"id":            a.ID,
-		"collection_id": a.CollectionID,
-		"collection":    a.Collection,
-		"created_at":    a.CreatedAt,
-	}
+	ID           int64     `db:"id" json:"id"`
+	CollectionID int64     `db:"collection_id" json:"-"`
+	Collection   string    `db:"collection" json:"-"`
+	Token        string    `db:"access_token" json:"access_token"`
+	CreatedAt    time.Time `db:"created_at" json:"created_at"`
+	User         *User     `json:"user"`
 }
 
 type Project struct {
-	ID          string         `bun:"id,pk,notnull"`
+	ID          int64          `bun:"id,pk,notnull"`
 	Title       string         `bun:"title,notnull"`
 	Descriptiom string         `bun:"description"`
 	Slug        string         `bun:"slug,unique,notnull"`
@@ -30,39 +24,22 @@ type Project struct {
 }
 
 type User struct {
-	ID              string     `db:"id"`
-	ProjectID       *string    `db:"project_id"`
-	FirstName       string     `db:"first_name,notnull"`
-	LastName        string     `db:"last_name"`
-	Email           string     `db:"email"`
-	Password        string     `db:"password" json:"-"`
-	EmailVerifiedAt *time.Time `db:"email_verified_at"`
-	IsActive        bool       `db:"is_active"`
-	Role            string     ``
-	Collection      string
-	Permissions     map[string]any `db:"permissions_json"`
-	CreatedAt       time.Time      `db:"created_at"`
-	UpdatedAt       time.Time      `db:"updated_at"`
-}
-
-func (user *User) ToMap() map[string]any {
-	return map[string]any{
-		"id":              user.ID,
-		"collection_id":   user.ProjectID,
-		"first_name":      user.FirstName,
-		"last_name":       user.LastName,
-		"email":           user.Email,
-		"password":        user.Password,
-		"email_verify_at": user.EmailVerifiedAt,
-		"is_active":       user.IsActive,
-		"permissions":     user.Permissions,
-		"created_at":      user.CreatedAt,
-		"updated_at":      user.UpdatedAt,
-	}
+	ID              int64          `db:"id" json:"id"`
+	ProjectID       *string        `db:"project_id" json:"project_id"`
+	FirstName       *string        `db:"first_name" json:"first_name"`
+	LastName        *string        `db:"last_name" json:"last_name"`
+	Email           string         `db:"email" json:"email"`
+	Password        string         `db:"password" json:"-"`
+	EmailVerifiedAt *time.Time     `db:"email_verified_at" json:"-"`
+	IsActive        bool           `db:"is_active" json:"is_active"`
+	Collection      string         `json:"-"`
+	Permissions     map[string]any `db:"permissions_json" json:"permissions"`
+	CreatedAt       time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time      `db:"updated_at" json:"updated_at"`
 }
 
 type ProjectCollection struct {
-	ID string `bun:"id,pk,notnull"`
+	ID int64 `bun:"id,pk,notnull"`
 
 	ProjectID string   `bun:"project_id,notnull"`
 	Project   *Project `bun:"rel:belongs-to,join:project_id=id"`
@@ -78,7 +55,7 @@ type ProjectCollection struct {
 }
 
 type ProjectCollectionField struct {
-	ID           string             `bun:"id,pk,notnull"`
+	ID           int64              `bun:"id,pk,notnull"`
 	CollectionID string             `bun:"collection_id,notnull"`
 	Collection   *ProjectCollection `bun:"rel:belongs-to,join:collection_id=id"`
 
@@ -95,7 +72,7 @@ type ProjectCollectionField struct {
 }
 
 type ProjectCollectionRecord struct {
-	ID           string             `bun:"id,pk,notnull"`
+	ID           int64              `bun:"id,pk,notnull"`
 	CollectionID string             `bun:"collection_id,notnull"`
 	Collection   *ProjectCollection `bun:"rel:belongs-to,join:collection_id=id"`
 	Data         map[string]any     `bun:"data,type:json"`
@@ -118,7 +95,7 @@ type ProjectCollectionRecord struct {
 }
 
 type ProjectPage struct {
-	ID          string         `bun:"id,pk,notnull"`
+	ID          int64          `bun:"id,pk,notnull"`
 	ProjectID   string         `bun:"project_id,unique:unq_project_page,notnull"`
 	Project     *Project       `bun:"rel:belongs-to,join:project_id=id"`
 	Title       string         `bun:"title,notnull,unique:unq_project_page"`
@@ -130,7 +107,7 @@ type ProjectPage struct {
 }
 
 type EmailTemplate struct {
-	ID               string    `bun:"id,pk,notnull"`
+	ID               int64     `bun:"id,pk,notnull"`
 	Name             string    `bun:"name,unique"`
 	Description      string    `bun:"description"`
 	isSystemTemplate string    `bun:"is_system_template,default:1"`
@@ -141,7 +118,7 @@ type EmailTemplate struct {
 }
 
 type SystemSetting struct {
-	ID          string    `bun:"id,pk,notnull"`
+	ID          int64     `bun:"id,pk,notnull"`
 	ProjectID   *string   `bun:"project_id"`
 	Project     *Project  `bun:"rel:belongs-to,join:project_id=id"`
 	Value       string    `bun:"value"`

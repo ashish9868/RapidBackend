@@ -17,6 +17,7 @@ import (
 	"github.com/ashish9868/rapidbackend/constants"
 	respository "github.com/ashish9868/rapidbackend/core/repository"
 	"github.com/ashish9868/rapidbackend/middlewares"
+	"github.com/ashish9868/rapidbackend/models"
 	"github.com/ashish9868/rapidbackend/utils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-playground/form"
@@ -24,6 +25,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/xid"
+	"github.com/starfederation/datastar-go/datastar"
 )
 
 type App struct {
@@ -113,6 +115,7 @@ func NewApp(embed embed.FS) *App {
 	}
 	app.serveStatic()
 	app.serveNoRoute()
+	app.DBMigrate()
 	fmt.Printf("APP will start on PORT: %s\n\n", utils.SafeEnvGet("PORT", strconv.Itoa(constants.DEFAULT_PORT)))
 	return app
 }
@@ -228,20 +231,39 @@ func (app *App) serveNoRoute() {
 	}))
 }
 
-func (app *App) BindSafely(w http.ResponseWriter, r *http.Request, obj any) error {
+func (app *App) BindSafely(w http.ResponseWriter, r *http.Request, obj any) map[string]string {
 	contentType := r.Header.Get("Content-Type")
 	if strings.HasPrefix(contentType, "application/json") {
 		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		decoder := json.NewDecoder(r.Body)
 		decoder.DisallowUnknownFields()
-		return decoder.Decode(obj)
+		err := decoder.Decode(obj)
+		if err != nil {
+			return app.FormatErrors(err)
+		}
 	}
-
 	decoder := form.NewDecoder()
 	if err := r.ParseForm(); err != nil {
-		return err
+		return app.FormatErrors(err)
 	}
-	return decoder.Decode(obj, r.PostForm)
+	err := decoder.Decode(obj, r.PostForm)
+
+	if err != nil {
+		return app.FormatErrors(err)
+	}
+	return nil
+}
+
+func (a *App) GetUserFromRequest(r *http.Request) *models.User {
+	user, ok := r.Context().Value(constants.USER_CONTEXT_KEY).(*models.User)
+	if ok {
+		return user
+	}
+	return nil
+}
+
+func (app *App) GetSSE(w http.ResponseWriter, r *http.Request) *datastar.ServerSentEventGenerator {
+	return datastar.NewSSE(w, r)
 }
 
 func (app *App) SetAuthCookie(w http.ResponseWriter, value string, ageHours int) {
@@ -258,8 +280,8 @@ func (app *App) RenderComponent(w http.ResponseWriter, component templ.Component
 	component.Render(context.Background(), w)
 }
 
-func (app *App) FormatErrors(err error) map[string]any {
-	result := make(map[string]any)
+func (app *App) FormatErrors(err error) map[string]string {
+	result := make(map[string]string)
 
 	if errs, ok := err.(validation.Errors); ok {
 		for field, e := range errs {

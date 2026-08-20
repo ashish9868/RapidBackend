@@ -4,18 +4,18 @@ import (
 	"github.com/ashish9868/rapidbackend/dto"
 	"github.com/ashish9868/rapidbackend/templates/components/forms"
 	"github.com/ashish9868/rapidbackend/templates/layouts"
-	"github.com/ashish9868/rapidbackend/utils"
+	"github.com/samber/lo"
 )
 
-templ LoginForm(login *dto.LoginForm, errors map[string]any) {
+templ LoginForm(login *dto.LoginForm, errors map[string]string) {
 	@forms.Form(&forms.FormProps{
 		ID:     "superadmin_login_form",
 		Action: "/login",
 		Method: "post",
 		Errors: errors,
 		Fields: []forms.InputBaseProps{
-			{Type: "email", Name: "email", Label: "Email", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: utils.SafeGetMapValue(errors, "email", "")},
-			{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Name", Error: utils.SafeGetMapValue(errors, "password", "")},
+			{Type: "email", Name: "email", Label: "Email", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: lo.ValueOr(errors, "email", "")},
+			{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Name", Error: lo.ValueOr(errors, "password", "")},
 			{Type: "submit", Varient: "default", Label: "Login", IconBefore: "arrow-right"},
 			{Type: "custom", CustomComponent: layouts.RunJs(), ItemSize: 12},
 		},
@@ -24,6 +24,6 @@ templ LoginForm(login *dto.LoginForm, errors map[string]any) {
 
 templ LoginPage() {
 	@layouts.PublicLayout() {
-		@LoginForm(&dto.LoginForm{}, map[string]any{})
+		@LoginForm(&dto.LoginForm{}, map[string]string{})
 	}
 }

@@ -3,12 +3,13 @@ package forms
 import "fmt"
 import "github.com/ashish9868/rapidbackend/utils"
 import "strings"
+import "github.com/samber/lo"
 
 type FormProps struct {
 	ID      string
 	Action  string
 	Method  string
-	Errors  map[string]any
+	Errors  map[string]string
 	Fields  []InputBaseProps
 	Attrs   []Attr
 	Signals templ.Attributes
@@ -23,7 +24,7 @@ func (f *FormProps) BuildSignalVar(formId string, key string) string {
 }
 
 templ Form(formProps *FormProps) {
-	{{ globalError := utils.SafeGetMapValue(formProps.Errors, "global", "") }}
+	{{ globalError := lo.ValueOr(formProps.Errors, "global", "") }}
 	<form
 		{ formProps.Signals... }
 		{ AppendAttrs(formProps.Attrs, []Attr{
@@ -35,9 +36,9 @@ templ Form(formProps *FormProps) {
         {Name: "data-on:submit__prevent", Value: fmt.Sprintf("@%s('%s',  {contentType: 'form'})", strings.ToLower(utils.ToString(utils.Coalesce(formProps.Method, "POST"))), formProps.Action)},
     }...)... }
 	>
-		if len(globalError) > 0 {
+		if len(utils.ToString(globalError)) > 0 {
 			<div class="col-span-12">
-				<p class="text-red-500">{ globalError }</p>
+				<p class="text-red-500">{ utils.ToString(globalError) }</p>
 			</div>
 		}
 		for _, field := range formProps.Fields {

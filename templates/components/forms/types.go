@@ -156,7 +156,7 @@ func (b *InputBaseProps) MakeAttrs(moreAttrs ...Attr) templ.Attributes {
 
 	if strings.EqualFold(b.Type, "password") {
 		attrs = append(attrs, Attr{
-			Name: "autocomplete", Value: "new-password",
+			Name: "autocomplete", Value: "off",
 		})
 	}
 	if isDateOrTimeField {

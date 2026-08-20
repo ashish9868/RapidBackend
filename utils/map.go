@@ -2,43 +2,56 @@ package utils
 
 import (
 	"reflect"
+	"strings"
 )
 
-func SafeGetMapValue(row map[string]any, key string, defaultVal any) string {
-	if row == nil {
-		return ToString(defaultVal)
+func ModelToMap(model any, parsableTag string) map[string]any {
+	if model == nil {
+		return map[string]any{}
 	}
-	if val, ok := row[key]; ok && val != nil {
-		return ToString(val)
+	// Already in desired format.
+	if m, ok := model.(map[string]any); ok {
+		return m
 	}
-	return ToString(defaultVal)
-}
+	result := make(map[string]any)
 
-func MergeMap(base interface{}, values ...interface{}) (map[string]interface{}, error) {
-	out := make(map[string]interface{})
+	t := reflect.TypeOf(model)
+	v := reflect.ValueOf(model)
 
-	rv := reflect.ValueOf(base)
-	if rv.Kind() == reflect.Struct {
-		rt := rv.Type()
-		for i := 0; i < rv.NumField(); i++ {
-			field := rt.Field(i)
-			if field.PkgPath != "" {
-				continue // unexported
-			}
-			out[field.Name] = rv.Field(i).Interface()
+	if t == nil {
+		return result
+	}
+
+	if t.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return result
 		}
-	} else if m, ok := base.(map[string]interface{}); ok {
-		for k, v := range m {
-			out[k] = v
+
+		t = t.Elem()
+		v = v.Elem()
+	}
+
+	if t.Kind() != reflect.Struct {
+		return result
+	}
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+
+		tag := field.Tag.Get(parsableTag)
+
+		if tag == "" || tag == "-" {
+			continue
 		}
-	} else {
-		out["Data"] = base
+
+		column := strings.Split(tag, ",")[0]
+
+		if column == "" || column == "-" {
+			continue
+		}
+
+		result[column] = v.Field(i).Interface()
 	}
 
-	for i := 0; i < len(values); i += 2 {
-		k := values[i].(string)
-		out[k] = values[i+1]
-	}
-
-	return out, nil
+	return result
 }

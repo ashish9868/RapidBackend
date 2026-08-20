@@ -29,6 +29,7 @@ func NewServeCommand(app *core.App) *cobra.Command {
 					app.RootRouter,
 					middlewares.Recovery,
 					middlewares.Logger,
+					middlewares.AuthMiddleware(app.AccessTokenRepository, false, false),
 				),
 				ReadHeaderTimeout: 5 * time.Second,
 				ReadTimeout:       30 * time.Second,

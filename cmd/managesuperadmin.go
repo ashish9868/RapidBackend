@@ -1,77 +1,26 @@
 package cmd
 
 import (
-	"bufio"
-	"errors"
-	"fmt"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/ashish9868/rapidbackend/core"
 	"github.com/ashish9868/rapidbackend/core/repository"
 	"github.com/ashish9868/rapidbackend/utils"
-	"github.com/charmbracelet/x/term"
-	"github.com/rs/xid"
 	"github.com/spf13/cobra"
 )
 
 func NewCreateSuperAdminCommand(app *core.App) *cobra.Command {
+	var email string
 	createSuperadminCmd := &cobra.Command{
 		Use:   "managesuperadmin",
 		Short: "Manage a superadmin",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			reader := bufio.NewReader(os.Stdin)
-
-			fmt.Println("Create Super Administrator")
-			fmt.Println("--------------------------")
-
-			fmt.Print("Email: ")
-			email, err := reader.ReadString('\n')
-			if err != nil {
-				return err
-			}
-			email = strings.TrimSpace(email)
-
-			if email == "" {
-				return errors.New("email is required")
-			}
-
-			fmt.Print("Password: ")
-			passwordBytes, err := term.ReadPassword(os.Stdin.Fd())
-			if err != nil {
-				return err
-			}
-
-			password := string(passwordBytes)
-
-			fmt.Print("\nConfirm Password: ")
-			confirmBytes, err := term.ReadPassword(os.Stdin.Fd())
-			if err != nil {
-				return err
-			}
-			fmt.Println()
-
-			confirm := string(confirmBytes)
-
-			if password != confirm {
-				return errors.New("passwords do not match")
-			}
-
-			err = utils.ValidatePassword(password)
-			if err != nil {
-				return err
-			}
-
 			now := time.Now()
-
-			err = app.BaseRepository.InsertOrUpdate(repository.COLLECTION_SUPERADMINS, map[string]any{
-				"id":                xid.New().String(),
+			password := utils.GenerateRandomPassword(10)
+			err := app.BaseRepository.InsertOrUpdate(repository.COLLECTION_SUPERADMINS, map[string]any{
 				"email":             email,
-				"first_name":        xid.New().String(),
-				"last_name":         email,
-				"password":          utils.HashPassword(password),
+				"password":          utils.HashPassword("Asdf1234@#$"),
 				"email_verified_at": &now,
 				"is_active":         true,
 			}, map[string]any{
@@ -80,6 +29,7 @@ func NewCreateSuperAdminCommand(app *core.App) *cobra.Command {
 
 			if err == nil {
 				utils.Log("✓ Super administrator created/updated successfully.")
+				utils.LogF("Generated Password (Copy it) is : \n\n%s\n\n", password)
 			} else {
 				utils.Log("x Unable to create/update superadmin.", err.Error())
 			}
@@ -87,5 +37,7 @@ func NewCreateSuperAdminCommand(app *core.App) *cobra.Command {
 		},
 	}
 
+	createSuperadminCmd.Flags().StringVar(&email, "email", "", "--email something@example.com")
+	createSuperadminCmd.MarkFlagRequired("email")
 	return createSuperadminCmd
 }

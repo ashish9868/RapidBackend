@@ -11,12 +11,13 @@ import templruntime "github.com/a-h/templ/runtime"
 import "fmt"
 import "github.com/ashish9868/rapidbackend/utils"
 import "strings"
+import "github.com/samber/lo"
 
 type FormProps struct {
 	ID      string
 	Action  string
 	Method  string
-	Errors  map[string]any
+	Errors  map[string]string
 	Fields  []InputBaseProps
 	Attrs   []Attr
 	Signals templ.Attributes
@@ -51,7 +52,7 @@ func Form(formProps *FormProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		globalError := utils.SafeGetMapValue(formProps.Errors, "global", "")
+		globalError := lo.ValueOr(formProps.Errors, "global", "")
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -75,15 +76,15 @@ func Form(formProps *FormProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if len(globalError) > 0 {
+		if len(utils.ToString(globalError)) > 0 {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"col-span-12\"><p class=\"text-red-500\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var2 string
-			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(globalError)
+			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(utils.ToString(globalError))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/components/forms/form.templ`, Line: 40, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/components/forms/form.templ`, Line: 41, Col: 57}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {

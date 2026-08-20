@@ -12,10 +12,10 @@ import (
 	"github.com/ashish9868/rapidbackend/dto"
 	"github.com/ashish9868/rapidbackend/templates/components/forms"
 	"github.com/ashish9868/rapidbackend/templates/layouts"
-	"github.com/ashish9868/rapidbackend/utils"
+	"github.com/samber/lo"
 )
 
-func LoginForm(login *dto.LoginForm, errors map[string]any) templ.Component {
+func LoginForm(login *dto.LoginForm, errors map[string]string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -42,8 +42,8 @@ func LoginForm(login *dto.LoginForm, errors map[string]any) templ.Component {
 			Method: "post",
 			Errors: errors,
 			Fields: []forms.InputBaseProps{
-				{Type: "email", Name: "email", Label: "Email", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: utils.SafeGetMapValue(errors, "email", "")},
-				{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Name", Error: utils.SafeGetMapValue(errors, "password", "")},
+				{Type: "email", Name: "email", Label: "Email", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: lo.ValueOr(errors, "email", "")},
+				{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Name", Error: lo.ValueOr(errors, "password", "")},
 				{Type: "submit", Varient: "default", Label: "Login", IconBefore: "arrow-right"},
 				{Type: "custom", CustomComponent: layouts.RunJs(), ItemSize: 12},
 			},
@@ -88,7 +88,7 @@ func LoginPage() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = LoginForm(&dto.LoginForm{}, map[string]any{}).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = LoginForm(&dto.LoginForm{}, map[string]string{}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -1,0 +1,11 @@
+package pages
+
+import "github.com/ashish9868/rapidbackend/templates/layouts"
+import "github.com/ashish9868/rapidbackend/models"
+
+templ DashboardHomePage(user *models.User) {
+	@layouts.PrivateLayout() {
+		<h1>Hello Dashboard</h1>
+		{ user.Email }
+	}
+}

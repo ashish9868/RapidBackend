@@ -12,6 +12,16 @@ templ PublicLayout() {
 	}
 }
 
+templ PrivateLayout() {
+	<div class="flex flex-col gap-4 w-full max-w-sm justify-center justify-self-center items-center min-h-screen py-6">
+		<div class="text-white font-bold flex flex-col min-h-[150px] text-center items-center">
+			<img width={ 100 } src={ "/static/logo.svg" } alt="Rapid Backend"/>
+			<p>Dashboard</p>
+		</div>
+		{ children... }
+	</div>
+}
+
 templ RunJs() {
 	<script>
             document.addEventListener("DOMContentLoaded", () => {

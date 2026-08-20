@@ -10,6 +10,7 @@ import (
 
 	"github.com/ashish9868/rapidbackend/utils"
 	"github.com/jmoiron/sqlx"
+	"github.com/samber/lo"
 )
 
 const (
@@ -76,6 +77,10 @@ func (b *BaseRepository) BuildUpdatePlaceHolders(data map[string]any) (placehold
 
 }
 
+func (b *BaseRepository) ModelToMap(model any) map[string]any {
+	return utils.ModelToMap(model, "db")
+}
+
 func (b *BaseRepository) GetByColumn(table string, column string, value string, model any) error {
 	placeholders, values := b.BuildWhere(map[string]any{
 		column: value,
@@ -85,6 +90,12 @@ func (b *BaseRepository) GetByColumn(table string, column string, value string, 
 		b.Escape(table),
 		strings.Join(placeholders, ", "),
 	)
+	utils.Log("SQL: GetByColumn -> ", utils.ToJSON(map[string]any{
+		"query":        sql,
+		"placeholders": placeholders,
+		"values":       values,
+	}))
+
 	return b.DB.GetContext(context.Background(), model, sql, values...)
 }
 
@@ -94,9 +105,19 @@ func (b *BaseRepository) GetById(table string, model any, value string) error {
 
 func (b *BaseRepository) SelectWhere(table string, model any, where map[string]any) error {
 	placeholders, values := b.BuildWhere(where)
-
+	modelMap := b.ModelToMap(model)
 	if len(placeholders) > 0 && len(values) > 0 {
-		sql := fmt.Sprintf("SELECT * FROM %s WHERE %s LIMIT 1", b.Escape(table), strings.Join(placeholders, " AND "))
+		sql := fmt.Sprintf(
+			`SELECT "%s" FROM %s WHERE %s LIMIT 1`,
+			strings.Join(lo.Keys(modelMap), `","`),
+			b.Escape(table),
+			strings.Join(placeholders, " AND "),
+		)
+		utils.Log("SQL: SelectWhere -> ", utils.ToJSON(map[string]any{
+			"query":        sql,
+			"placeholders": placeholders,
+			"values":       values,
+		}))
 		return b.DB.GetContext(context.Background(), model, sql, values...)
 
 	}
@@ -115,6 +136,12 @@ func (b *BaseRepository) DeleteWhere(table string, where map[string]any, limit i
 			strings.Join(placeholders, " AND "),
 			limit,
 		)
+		utils.Log("SQL: DeleteWhere -> ", utils.ToJSON(map[string]any{
+			"query":        sql,
+			"placeholders": placeholders,
+			"values":       values,
+		}))
+
 		return b.DB.ExecContext(context.Background(), sql, values...)
 	}
 	return nil, errors.New("SelectWhere: Operation not allowed with empty where")
@@ -132,11 +159,15 @@ func (b *BaseRepository) Exists(table, column string, value any, ignore_id strin
 		b.Escape(column),
 	)
 
+	utils.Log("SQL: Exists -> ", utils.ToJSON(map[string]any{
+		"query": query,
+	}))
+
 	err := b.DB.GetContext(
 		context.Background(),
 		&struct {
 			Result string `db:"result"`
-			ID     string `db:"id"`
+			ID     int64  `db:"id"`
 		}{},
 		query,
 		value,
@@ -152,6 +183,10 @@ func (b *BaseRepository) DeleteById(table, id string) (sql.Result, error) {
 		b.Escape(table),
 	)
 
+	utils.Log("SQL: DeleteById -> ", utils.ToJSON(map[string]any{
+		"query": query,
+	}))
+
 	return b.DB.ExecContext(
 		context.Background(),
 		query,
@@ -159,10 +194,9 @@ func (b *BaseRepository) DeleteById(table, id string) (sql.Result, error) {
 	)
 }
 
-func (b *BaseRepository) Insert(table string, data map[string]any) (sql.Result, error) {
-
-	placeholders, columns, values := b.BuildInsertPlaceHolders(data)
-
+func (b *BaseRepository) Insert(table string, model any) (sql.Result, error) {
+	modelMap := lo.OmitByKeys(b.ModelToMap(model), []string{"id"})
+	placeholders, columns, values := b.BuildInsertPlaceHolders(modelMap)
 	query := fmt.Sprintf(
 		`INSERT INTO %s (%s) VALUES (%s)`,
 		b.Escape(table),
@@ -170,7 +204,12 @@ func (b *BaseRepository) Insert(table string, data map[string]any) (sql.Result, 
 		strings.Join(placeholders, ", "),
 	)
 
-	utils.LogF("SQL: %s", query)
+	utils.Log("SQL: Insert -> ", utils.ToJSON(map[string]any{
+		"query":        query,
+		"placeholders": placeholders,
+		"values":       values,
+		"columns":      columns,
+	}))
 
 	return b.DB.ExecContext(
 		context.Background(),
@@ -179,22 +218,21 @@ func (b *BaseRepository) Insert(table string, data map[string]any) (sql.Result, 
 	)
 }
 
-func (b *BaseRepository) InsertOrUpdate(table string, data map[string]any, where map[string]any) error {
+func (b *BaseRepository) InsertOrUpdate(table string, model any, where map[string]any) error {
 	// check exists
-	model := struct {
-		Result string `db:"result"`
-		ID     string `db:"id"`
+	selectModel := &struct {
+		ID int64 `db:"id"`
 	}{}
 
 	return b.WithTransaction(context.Background(), b.DB, func(tx *sqlx.Tx) error {
-		err := b.SelectWhere(table, model, where)
+		err := b.SelectWhereTx(tx, table, selectModel, where)
 		if err != nil {
-			_, err = b.InsertTx(tx, table, data)
+			_, err = b.InsertTx(tx, table, model)
 			if err != nil {
 				return err
 			}
 		}
-		_, err = b.UpdateByIdTx(tx, table, model.ID, data)
+		_, err = b.UpdateByIdTx(tx, table, selectModel.ID, model)
 		if err != nil {
 			return err
 		}
@@ -203,13 +241,21 @@ func (b *BaseRepository) InsertOrUpdate(table string, data map[string]any, where
 
 }
 
-func (b *BaseRepository) UpdateById(table string, id string, data map[string]any) (sql.Result, error) {
-	placeholders, values := b.BuildUpdatePlaceHolders(data)
+func (b *BaseRepository) UpdateById(table string, id int64, model any) (sql.Result, error) {
+	modelMap := b.ModelToMap(model)
+	placeholders, values := b.BuildUpdatePlaceHolders(modelMap)
 	query := fmt.Sprintf(
 		`UPDATE %s SET %s  WHERE id = ?`,
 		b.Escape(table),
 		strings.Join(placeholders, ", "),
 	)
+
+	utils.Log("SQL: UpdateById -> ", utils.ToJSON(map[string]any{
+		"query":        query,
+		"placeholders": placeholders,
+		"values":       values,
+	}))
+
 	return b.DB.ExecContext(
 		context.Background(),
 		query,
@@ -226,6 +272,12 @@ func (b *BaseRepository) GetByColumnTx(tx *sqlx.Tx, table string, column string,
 		b.Escape(table),
 		strings.Join(placeholders, ", "),
 	)
+	utils.Log("SQL: GetByColumnTx -> ", utils.ToJSON(map[string]any{
+		"query":        sql,
+		"placeholders": placeholders,
+		"values":       values,
+	}))
+
 	return tx.GetContext(context.Background(), model, sql, values...)
 }
 
@@ -235,9 +287,20 @@ func (b *BaseRepository) GetByIdTx(tx *sqlx.Tx, table string, model any, value s
 
 func (b *BaseRepository) SelectWhereTx(tx *sqlx.Tx, table string, model any, where map[string]any) error {
 	placeholders, values := b.BuildWhere(where)
-
+	modelMap := b.ModelToMap(model)
 	if len(placeholders) > 0 && len(values) > 0 {
-		sql := fmt.Sprintf("SELECT * FROM %s WHERE %s LIMIT 1", b.Escape(table), strings.Join(placeholders, " AND "))
+		sql := fmt.Sprintf(
+			`SELECT "%s" FROM %s WHERE %s LIMIT 1`,
+			strings.Join(lo.Keys(modelMap), `","`),
+			b.Escape(table),
+			strings.Join(placeholders, " AND "),
+		)
+		utils.Log("SQL: SelectWhereTx -> ", utils.ToJSON(map[string]any{
+			"query":        sql,
+			"placeholders": placeholders,
+			"values":       values,
+		}))
+
 		return tx.GetContext(context.Background(), model, sql, values...)
 
 	}
@@ -250,6 +313,10 @@ func (b *BaseRepository) DeleteByIdTx(tx *sqlx.Tx, table, id string) (sql.Result
 		b.Escape(table),
 	)
 
+	utils.Log("SQL: DeleteByIdTx -> ", utils.ToJSON(map[string]any{
+		"query": query,
+	}))
+
 	return tx.ExecContext(
 		context.Background(),
 		query,
@@ -257,9 +324,10 @@ func (b *BaseRepository) DeleteByIdTx(tx *sqlx.Tx, table, id string) (sql.Result
 	)
 }
 
-func (b *BaseRepository) InsertTx(tx *sqlx.Tx, table string, data map[string]any) (sql.Result, error) {
+func (b *BaseRepository) InsertTx(tx *sqlx.Tx, table string, model any) (sql.Result, error) {
 
-	placeholders, columns, values := b.BuildInsertPlaceHolders(data)
+	modelMap := lo.OmitByKeys(b.ModelToMap(model), []string{"id"})
+	placeholders, columns, values := b.BuildInsertPlaceHolders(modelMap)
 
 	query := fmt.Sprintf(
 		`INSERT INTO %s (%s) VALUES (%s)`,
@@ -268,6 +336,13 @@ func (b *BaseRepository) InsertTx(tx *sqlx.Tx, table string, data map[string]any
 		strings.Join(placeholders, ", "),
 	)
 
+	utils.Log("SQL: InsertTx -> ", utils.ToJSON(map[string]any{
+		"query":        query,
+		"placeholders": placeholders,
+		"values":       values,
+		"columns":      columns,
+	}))
+
 	return tx.ExecContext(
 		context.Background(),
 		query,
@@ -275,31 +350,38 @@ func (b *BaseRepository) InsertTx(tx *sqlx.Tx, table string, data map[string]any
 	)
 }
 
-func (b *BaseRepository) InsertOrUpdateTx(tx *sqlx.Tx, table string, data map[string]any, where map[string]any) (sql.Result, error) {
+func (b *BaseRepository) InsertOrUpdateTx(tx *sqlx.Tx, table string, model any, where map[string]any) (sql.Result, error) {
 	// check exists
-	model := struct {
-		Result string `db:"result"`
-		ID     string `db:"id"`
+	selectModel := &struct {
+		ID int64 `db:"id"`
 	}{}
 
-	err := b.SelectWhere(table, model, where)
+	modelMap := b.ModelToMap(model)
+
+	err := b.SelectWhereTx(tx, table, &selectModel, where)
 	if err != nil {
-		return b.InsertTx(tx, table, data)
+		return b.InsertTx(tx, table, modelMap)
 	}
-	return b.UpdateByIdTx(tx, table, model.ID, data)
+	return b.UpdateByIdTx(tx, table, selectModel.ID, model)
 }
 
-func (b *BaseRepository) UpdateByIdTx(tx *sqlx.Tx, table string, id string, data map[string]any) (sql.Result, error) {
-	placeholders, values := b.BuildUpdatePlaceHolders(data)
+func (b *BaseRepository) UpdateByIdTx(tx *sqlx.Tx, table string, id int64, model any) (sql.Result, error) {
+	modelMap := b.ModelToMap(model)
+	placeholders, values := b.BuildUpdatePlaceHolders(modelMap)
 	query := fmt.Sprintf(
 		`UPDATE %s SET %s  WHERE id = ?`,
 		b.Escape(table),
 		strings.Join(placeholders, ", "),
 	)
+	utils.Log("SQL: UpdateByIdTx -> ", utils.ToJSON(map[string]any{
+		"query":        query,
+		"placeholders": placeholders,
+		"values":       values,
+	}))
 	return tx.ExecContext(
 		context.Background(),
 		query,
-		append([]any{id}, values...),
+		append(values, id)...,
 	)
 }
 
