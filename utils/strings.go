@@ -32,3 +32,10 @@ func Singular(plural string) string {
 func ToString(v any) string {
 	return fmt.Sprint(v)
 }
+
+func IFElse(cond bool, trueVal string, falseVal string) string {
+	if cond {
+		return trueVal
+	}
+	return falseVal
+}

@@ -23,7 +23,7 @@ func GetSha256Hash(str string) string {
 	return hex.EncodeToString(h[:])
 }
 
-func GenerateRandomHash() (raw, hash, prefix string) {
+func GenerateRandomHash() string {
 	id := xid.New().String()
 	bytes := make([]byte, 16) // 256-bit
 	_, err := rand.Read(bytes)
@@ -31,11 +31,11 @@ func GenerateRandomHash() (raw, hash, prefix string) {
 		panic(err)
 	}
 
-	raw = "tx_" + base64.RawURLEncoding.EncodeToString([]byte(id)) + "_" + base64.RawURLEncoding.EncodeToString(bytes)
+	raw := "tx_" + base64.RawURLEncoding.EncodeToString([]byte(id)) + "_" + base64.RawURLEncoding.EncodeToString(bytes)
 
-	hash = GetSha256Hash(raw)
+	hash := GetSha256Hash(raw)
 
-	prefix = raw[:10]
+	// prefix := raw[:10]
 
-	return
+	return hash
 }

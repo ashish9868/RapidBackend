@@ -4,11 +4,9 @@ import (
 	"net/http"
 
 	"github.com/ashish9868/rapidbackend/core"
-	"github.com/ashish9868/rapidbackend/dto"
+	"github.com/ashish9868/rapidbackend/core/services"
 	"github.com/ashish9868/rapidbackend/templates/pages"
 	"github.com/ashish9868/rapidbackend/utils"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
 func SuperAdminLoginHandler() *core.ResourceHandler {
@@ -21,29 +19,15 @@ func SuperAdminLoginHandler() *core.ResourceHandler {
 		},
 		Create: &core.ResourceAction{
 			Handler: func(w http.ResponseWriter, r *http.Request, app *core.App) {
-				var form dto.LoginForm
-				// ShouldBind checks Content-Type to select a binding engine automatically
-				if err := app.BindSafely(w, r, &form); err != nil {
-					app.RenderComponent(w, pages.LoginForm(&form, app.FormatErrors(err)))
+				authService := services.NewAuthService(app)
+				form, token, errors := authService.ValidateLogin(w, r, true)
+				utils.Log(utils.ToJSON(errors))
+				if errors != nil {
+					app.RenderComponent(w, pages.LoginForm(form, errors))
 					return
 				}
-
-				err := validation.ValidateStruct(&form,
-					validation.Field(&form.Email,
-						validation.Required.Error("Email is required"),
-						is.Email.Error("Please Provide a valid Email"),
-					),
-					validation.Field(&form.Password,
-						validation.Required.Error("Password is required"),
-					),
-				)
-
-				if err != nil {
-					app.RenderComponent(w, pages.LoginForm(&form, app.FormatErrors(err)))
-					return
-				}
-
-				app.RenderComponent(w, pages.LoginForm(&form, map[string]any{}))
+				app.SetAuthCookie(w, token.Token, 24)
+				http.Redirect(w, r, "/login?success=true", http.StatusSeeOther)
 			},
 		},
 	}

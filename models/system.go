@@ -3,11 +3,20 @@ package models
 import "time"
 
 type AccessKeyToken struct {
-	ID           string    `bun:"id,pk,notnull"`
-	CollectionID string    `bun:"collection_id,notnull"`
-	Collection   string    `bun:"collection,notnull"`
-	Token        string    `bun:"access_token"`
-	CreatedAt    time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
+	ID           string    `db:"id"`
+	CollectionID string    `db:"collection_id"`
+	Collection   string    `db:"collection"`
+	Token        string    `db:"access_token"`
+	CreatedAt    time.Time `db:"created_at"`
+}
+
+func (a *AccessKeyToken) ToMap() map[string]any {
+	return map[string]any{
+		"id":            a.ID,
+		"collection_id": a.CollectionID,
+		"collection":    a.Collection,
+		"created_at":    a.CreatedAt,
+	}
 }
 
 type Project struct {
@@ -20,34 +29,36 @@ type Project struct {
 	UpdatedAt   time.Time      `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
 }
 
-type Superadmin struct {
-	ID              string     `bun:"id,pk,notnull"`
-	FirstName       string     `bun:"first_name,notnull"`
-	LastName        string     `bun:"last_name"`
-	Email           string     `bun:"email,unique:unq_project_email,notnull"`
-	Password        string     `bun:"password,notnull" json:"-"`
-	EmailVerifiedAt *time.Time `bun:"email_verified_at"`
-	IsActive        bool       `bun:"is_active,default:'0'"`
-	CreatedAt       time.Time  `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	UpdatedAt       time.Time  `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+type User struct {
+	ID              string     `db:"id"`
+	ProjectID       *string    `db:"project_id"`
+	FirstName       string     `db:"first_name,notnull"`
+	LastName        string     `db:"last_name"`
+	Email           string     `db:"email"`
+	Password        string     `db:"password" json:"-"`
+	EmailVerifiedAt *time.Time `db:"email_verified_at"`
+	IsActive        bool       `db:"is_active"`
+	Role            string     ``
+	Collection      string
+	Permissions     map[string]any `db:"permissions_json"`
+	CreatedAt       time.Time      `db:"created_at"`
+	UpdatedAt       time.Time      `db:"updated_at"`
 }
 
-type User struct {
-	ID string `bun:"id,pk,notnull"`
-
-	ProjectID *string  `bun:"project_id,unique:unq_project_email"`
-	Project   *Project `bun:"rel:belongs-to,join:project_id=id"`
-
-	FirstName       string     `bun:"first_name,notnull"`
-	LastName        string     `bun:"last_name"`
-	Email           string     `bun:"email,unique:unq_project_email,notnull"`
-	Password        string     `bun:"password,notnull" json:"-"`
-	EmailVerifiedAt *time.Time `bun:"email_verified_at,notnull"`
-	IsActive        bool       `bun:"is_active,default:'0'"`
-
-	Permissions map[string]any `bun:"permissions_json,type:json"`
-	CreatedAt   time.Time      `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	UpdatedAt   time.Time      `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+func (user *User) ToMap() map[string]any {
+	return map[string]any{
+		"id":              user.ID,
+		"collection_id":   user.ProjectID,
+		"first_name":      user.FirstName,
+		"last_name":       user.LastName,
+		"email":           user.Email,
+		"password":        user.Password,
+		"email_verify_at": user.EmailVerifiedAt,
+		"is_active":       user.IsActive,
+		"permissions":     user.Permissions,
+		"created_at":      user.CreatedAt,
+		"updated_at":      user.UpdatedAt,
+	}
 }
 
 type ProjectCollection struct {

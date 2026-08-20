@@ -1,4 +1,4 @@
-package respository
+package repository
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/ashish9868/rapidbackend/utils"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -168,6 +169,8 @@ func (b *BaseRepository) Insert(table string, data map[string]any) (sql.Result, 
 		strings.Join(columns, ", "),
 		strings.Join(placeholders, ", "),
 	)
+
+	utils.LogF("SQL: %s", query)
 
 	return b.DB.ExecContext(
 		context.Background(),

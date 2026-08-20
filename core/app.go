@@ -15,10 +15,11 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/ashish9868/rapidbackend/constants"
-	"github.com/ashish9868/rapidbackend/core/respository"
+	respository "github.com/ashish9868/rapidbackend/core/repository"
 	"github.com/ashish9868/rapidbackend/middlewares"
 	"github.com/ashish9868/rapidbackend/utils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-playground/form"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
@@ -26,13 +27,14 @@ import (
 )
 
 type App struct {
-	RootRouter     *http.ServeMux
-	DB             *sqlx.DB
-	FeFs           *fs.FS
-	MigrationFs    *fs.FS
-	Version        *string
-	BaseRepository *respository.BaseRepository
-	AuthRepository *respository.AuthRepository
+	RootRouter            *http.ServeMux
+	DB                    *sqlx.DB
+	FeFs                  *fs.FS
+	MigrationFs           *fs.FS
+	Version               *string
+	BaseRepository        *respository.BaseRepository
+	AuthRepository        *respository.AuthRepository
+	AccessTokenRepository *respository.AccessTokenRepository
 }
 
 type ResourceAction struct {
@@ -97,14 +99,17 @@ func NewApp(embed embed.FS) *App {
 	sqldb.SetMaxIdleConns(5)
 
 	baseRepository := &respository.BaseRepository{DB: sqldb}
+	authRepository := &respository.AuthRepository{BaseRepository: baseRepository}
+	accessTokenRepository := &respository.AccessTokenRepository{BaseRepository: baseRepository}
 	rootRouter := &http.ServeMux{}
 	app := &App{
-		RootRouter:     rootRouter,
-		DB:             sqldb,
-		FeFs:           utils.SubFs(embed, "static"),
-		MigrationFs:    utils.SubFs(embed, "database/migrations"),
-		BaseRepository: baseRepository,
-		AuthRepository: &respository.AuthRepository{BaseRepository: baseRepository},
+		RootRouter:            rootRouter,
+		DB:                    sqldb,
+		FeFs:                  utils.SubFs(embed, "static"),
+		MigrationFs:           utils.SubFs(embed, "database/migrations"),
+		BaseRepository:        baseRepository,
+		AuthRepository:        authRepository,
+		AccessTokenRepository: accessTokenRepository,
 	}
 	app.serveStatic()
 	app.serveNoRoute()
@@ -231,18 +236,23 @@ func (app *App) BindSafely(w http.ResponseWriter, r *http.Request, obj any) erro
 		decoder.DisallowUnknownFields()
 		return decoder.Decode(obj)
 	}
-	return r.ParseForm()
+
+	decoder := form.NewDecoder()
+	if err := r.ParseForm(); err != nil {
+		return err
+	}
+	return decoder.Decode(obj, r.PostForm)
 }
 
-type Response struct {
-	Code       int
-	View       string
-	Data       any
-	Error      error
-	HxRedirect string
-	FormData   any
+func (app *App) SetAuthCookie(w http.ResponseWriter, value string, ageHours int) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "__auth",
+		Value:    value,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   60 * ageHours,
+	})
 }
-
 func (app *App) RenderComponent(w http.ResponseWriter, component templ.Component) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	component.Render(context.Background(), w)

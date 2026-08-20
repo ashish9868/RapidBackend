@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ashish9868/rapidbackend/core"
-	"github.com/ashish9868/rapidbackend/core/respository"
+	"github.com/ashish9868/rapidbackend/core/repository"
 	"github.com/ashish9868/rapidbackend/utils"
 	"github.com/charmbracelet/x/term"
 	"github.com/rs/xid"
@@ -66,12 +66,14 @@ func NewCreateSuperAdminCommand(app *core.App) *cobra.Command {
 
 			now := time.Now()
 
-			err = app.BaseRepository.InsertOrUpdate(respository.COLLECTION_SUPERADMINS, map[string]any{
+			err = app.BaseRepository.InsertOrUpdate(repository.COLLECTION_SUPERADMINS, map[string]any{
 				"id":                xid.New().String(),
+				"email":             email,
 				"first_name":        xid.New().String(),
 				"last_name":         email,
 				"password":          utils.HashPassword(password),
 				"email_verified_at": &now,
+				"is_active":         true,
 			}, map[string]any{
 				"email": email,
 			})

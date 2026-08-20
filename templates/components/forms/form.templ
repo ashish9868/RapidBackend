@@ -8,6 +8,7 @@ type FormProps struct {
 	ID      string
 	Action  string
 	Method  string
+	Errors  map[string]any
 	Fields  []InputBaseProps
 	Attrs   []Attr
 	Signals templ.Attributes
@@ -22,6 +23,7 @@ func (f *FormProps) BuildSignalVar(formId string, key string) string {
 }
 
 templ Form(formProps *FormProps) {
+	{{ globalError := utils.SafeGetMapValue(formProps.Errors, "global", "") }}
 	<form
 		{ formProps.Signals... }
 		{ AppendAttrs(formProps.Attrs, []Attr{
@@ -33,6 +35,11 @@ templ Form(formProps *FormProps) {
         {Name: "data-on:submit__prevent", Value: fmt.Sprintf("@%s('%s',  {contentType: 'form'})", strings.ToLower(utils.ToString(utils.Coalesce(formProps.Method, "POST"))), formProps.Action)},
     }...)... }
 	>
+		if len(globalError) > 0 {
+			<div class="col-span-12">
+				<p class="text-red-500">{ globalError }</p>
+			</div>
+		}
 		for _, field := range formProps.Fields {
 			<div class={ fmt.Sprintf("col-span-%s", utils.ToString(utils.Coalesce(field.ItemSize, 12))) }>
 				@field.Render(formProps.ID)

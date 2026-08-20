@@ -40,6 +40,7 @@ func LoginForm(login *dto.LoginForm, errors map[string]any) templ.Component {
 			ID:     "superadmin_login_form",
 			Action: "/login",
 			Method: "post",
+			Errors: errors,
 			Fields: []forms.InputBaseProps{
 				{Type: "email", Name: "email", Label: "Email", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: utils.SafeGetMapValue(errors, "email", "")},
 				{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Name", Error: utils.SafeGetMapValue(errors, "password", "")},
