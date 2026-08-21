@@ -14,10 +14,16 @@ templ LoginForm(login *dto.LoginForm, errors map[string]string) {
 		Method: "post",
 		Errors: errors,
 		Fields: []components.InputBaseProps{
-			{Type: "file", Name: "files", Label: "Choose Files", LabelIcon: "file", Max: 2},
+			// {Type: "file", Name: "files", Label: "Choose Files", LabelIcon: "file", Max: 2},
+			// 			{Type: "select", Name: "email3", Multiple: true, Options: []components.SelectOption{
+			// 	{Label: "One", Value: "1"},
+			// 	{Label: "Two", Value: "2"},
+			// }, Label: "Number", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: lo.ValueOr(errors, "email", "")},
+			// {Type: "date", Name: "email2", Label: "Number", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: lo.ValueOr(errors, "email", "")},
+
 			{Type: "email", Name: "email", Label: "Email", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: lo.ValueOr(errors, "email", "")},
 			{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Name", Error: lo.ValueOr(errors, "password", "")},
-			{Type: "submit", Varient: "default", Label: "Login", IconBefore: "arrow-right"},
+			{Type: "submit", Label: "Login", IconBefore: "arrow-right"},
 			{Type: "custom", CustomComponent: layouts.RunJs(), ItemSize: 12},
 		},
 	})

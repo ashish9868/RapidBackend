@@ -273,9 +273,22 @@ func (app *App) SetAuthCookie(w http.ResponseWriter, value string, ageHours int)
 		Value:    value,
 		Path:     "/",
 		HttpOnly: true,
-		MaxAge:   60 * ageHours,
+		MaxAge:   3600 * ageHours,
 	})
 }
+
+func (app *App) Logout(w http.ResponseWriter, r *http.Request) {
+	app.SetAuthCookie(w, "null", -10)
+	accessToken := middlewares.GetAccessTokenFromRequest(r)
+	err := app.AccessTokenRepository.DeleteAccessToken(accessToken)
+
+	if err != nil {
+		utils.Log(err.Error())
+	}
+	utils.LogF("Logging out -> %s", accessToken)
+	app.Redirect(w, r, "/login")
+}
+
 func (app *App) RenderComponent(w http.ResponseWriter, component templ.Component) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	component.Render(context.Background(), w)

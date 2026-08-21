@@ -1,0 +1,83 @@
+package layouts
+
+import (
+	"fmt"
+	"github.com/ashish9868/rapidbackend/models"
+	"github.com/ashish9868/rapidbackend/templates/components"
+	"github.com/ashish9868/rapidbackend/utils"
+)
+
+templ Sidebar(user *models.User) {
+	<aside class={ fmt.Sprintf("w-64 bg-bg border-r border-border flex flex-col justify-between hidden lg:flex shrink-0") }>
+		<div>
+			<!-- Logo -->
+			<div class={ fmt.Sprintf("h-16 flex items-center justify-between px-6 border-b border-border-800/80") }>
+				<div class="flex items-center gap-3">
+					<div class={ fmt.Sprintf("w-8 h-8 rounded-lg bg-bg-500 flex items-center justify-center text-bg-text shadow-lg shadow-elevated-500/30") }>
+						@components.Icon("chart-dots", "text-xl")
+					</div>
+					<span class={ fmt.Sprintf("text-bg-text font-semibold tracking-wide text-white") }>FastBackend</span>
+				</div>
+				<span class={ fmt.Sprintf("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-bg-500/10 text-bg-text-400 border border-border-500/20 text-white") }>PRO</span>
+			</div>
+			<!-- Navigation Section -->
+			<div class="px-4 py-6 space-y-6">
+				<div>
+					<p class="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>
+					<nav class="space-y-1">
+						<a href="#" class="flex items-center gap-3 px-3 py-2 text-white bg-indigo-600/90 hover:bg-indigo-600 rounded-lg font-medium text-sm transition-all shadow-sm shadow-indigo-500/20">
+							<i class="ti ti-layout-dashboard text-lg"></i>
+							<span>Overview</span>
+						</a>
+						<a href="#" class="flex items-center justify-between px-3 py-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg font-medium text-sm transition-all">
+							<div class="flex items-center gap-3">
+								<i class="ti ti-chart-line text-lg"></i>
+								<span>Analytics</span>
+							</div>
+							<span class="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Live</span>
+						</a>
+						<a href="#" class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg font-medium text-sm transition-all">
+							<i class="ti ti-users text-lg"></i>
+							<span>Customers</span>
+						</a>
+						<a href="#" class="flex items-center justify-between px-3 py-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg font-medium text-sm transition-all">
+							<div class="flex items-center gap-3">
+								<i class="ti ti-receipt text-lg"></i>
+								<span>Transactions</span>
+							</div>
+							<span class="text-xs bg-slate-800 px-2 py-0.5 rounded-full text-slate-400">24</span>
+						</a>
+					</nav>
+				</div>
+				<div>
+					<p class="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Management</p>
+					<nav class="space-y-1">
+						<a href="#" class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg font-medium text-sm transition-all">
+							<i class="ti ti-adjustments text-lg"></i>
+							<span>Integrations</span>
+						</a>
+						<a href="#" class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg font-medium text-sm transition-all">
+							<i class="ti ti-settings text-lg"></i>
+							<span>Settings</span>
+						</a>
+					</nav>
+				</div>
+			</div>
+		</div>
+		<!-- User Profile Footnote -->
+		<div class="p-4 border-t border-slate-800/80">
+			<div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer transition">
+				<div class="flex items-center gap-3">
+					<img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-8 h-8 rounded-full object-cover ring-2 ring-slate-700" alt="Avatar"/>
+					<div class="truncate">
+						<p class="text-sm font-medium text-slate-200 leading-none">{ utils.Coalesce(user.FirstName, "-") }</p>
+						<p class="text-[11px] text-slate-500 truncate mt-1">{ utils.Coalesce(user.Email, "-") }</p>
+					</div>
+				</div>
+				<button hx-target="body" tx-swap="innerHTML" hx-get="/logout?" class="text-slate-400 hover:text-slate-200 p-1">
+					@components.Icon("logout", "text-sm")
+				</button>
+			</div>
+		</div>
+	</aside>
+}

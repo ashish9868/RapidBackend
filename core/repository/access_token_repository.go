@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"time"
 
 	"github.com/ashish9868/rapidbackend/models"
@@ -47,4 +48,14 @@ func (a *AccessTokenRepository) GetUserFromToken(accessToken string) *models.Use
 		return user
 	}
 	return nil
+}
+
+func (a *AccessTokenRepository) DeleteAccessToken(token string) error {
+	if len(token) < 1 {
+		return errors.New("Access token is empty")
+	}
+	_, err := a.BaseRepository.DeleteWhere(COLLECTION_ACCESS_KEY_TOKENS, map[string]any{
+		"access_token": token,
+	}, 1)
+	return err
 }

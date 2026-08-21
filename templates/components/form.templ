@@ -209,13 +209,13 @@ templ Form(formProps *FormProps) {
 templ InputBase(props InputBaseProps) {
 	{{
 		fieldId := props.BuildID()
-		varient := utils.Coalesce(props.Varient, "default")
+		varient := utils.Coalesce(props.Varient, "bg")
 	}}
-	<div class={ fmt.Sprintf("flex flex-col bg-%s border-1 border-%s-light hover:border-%s hover:border-1 gap-y-1 px-4 py-2 rounded-lg", varient, varient, varient) }>
+	<div class={ fmt.Sprintf("flex flex-col bg-%s border-1 border-border-muted hover:border-border hover:border-1 gap-y-1 px-4 py-2 rounded-lg", varient) }>
 		<label class={ fmt.Sprintf("flex text-%s-text font-bold text-xs pt-1", varient) } for={ fieldId }>
 			<div class="flex flex-col gap-2 w-full">
 				<span class="flex gap-2 items-center">
-					@Icon(props.LabelIcon)
+					@Icon(props.LabelIcon, "")
 					{ props.Label }
 					if props.Required {
 						<i class="text-red-500 font-bold">*</i>
@@ -236,14 +236,14 @@ templ InputBase(props InputBaseProps) {
 
 templ Input(props InputBaseProps) {
 	@InputBase(props) {
-		{{ varient := utils.Coalesce(props.Varient, "default") }}
+		{{ varient := utils.Coalesce(props.Varient, "bg") }}
 		<div
 			{ AppendAttrs([]Attr{
             {Name: "x-data", Value: "{showPass: false}", Hide: props.Type != "password"},
             {Name: "class", Value: "flex justify-between py-1 relative"},
         })... }
 		>
-			@Icon(props.IconBefore)
+			@Icon(props.IconBefore, "")
 			if (strings.EqualFold(props.Type, "textarea")) {
 				<textarea
 					@input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
@@ -260,7 +260,7 @@ templ Input(props InputBaseProps) {
                     }...)... }
 				/>
 			}
-			@Icon(props.IconAfter)
+			@Icon(props.IconAfter, "")
 			if (strings.EqualFold(props.Type, "password")) {
 				<button
 					{ AppendAttrs([]Attr{
@@ -269,12 +269,12 @@ templ Input(props InputBaseProps) {
 						{Name: "x-on:click", Value: "showPass = !showPass"},
                 })... }
 				>
-					@Icon("eye", []Attr{
-						{Name: "x-show", Value: "!showPass"},
-					}...)
-					@Icon("eye-off", []Attr{
-						{Name: "x-show", Value: "showPass"},
-					}...)
+					<span x-show="!show">
+						@Icon("eye", "")
+					</span>
+					<span x-show="show">
+						@Icon("eye-off", "")
+					</span>
 				</button>
 			}
 		</div>
@@ -284,7 +284,7 @@ templ Input(props InputBaseProps) {
 templ FileInput(props InputBaseProps) {
 	@InputBase(props) {
 		{{
-			varient := utils.Coalesce(props.Varient, "default")
+			varient := utils.Coalesce(props.Varient, "bg")
 			xData := fmt.Sprintf(`{
 				max: %d,
 				files: [],
@@ -367,8 +367,7 @@ templ FileInput(props InputBaseProps) {
 				@dragover.prevent
 				@drop.prevent="addFiles($event.dataTransfer.files)"
 				class={ fmt.Sprintf(
-					"cursor-pointer border-dotted border-1 rounded-lg bg-%s px-2 my-2 py-4 text-center border-%s-text hover:bg-%s-dark",
-					varient,
+					"cursor-pointer border-dotted border-1 rounded-lg bg-%s px-2 my-2 py-4 text-center border-border hover:bg-%s-dark",
 					varient,
 					varient,
 				) }
@@ -419,7 +418,7 @@ templ FileInput(props InputBaseProps) {
 							@click="remove(index)"
 							class="rounded-full p-1 bg-red-500 hover:bg-red-600 text-white cursor-pointer"
 						>
-							@Icon("x")
+							@Icon("x", "")
 						</button>
 					</div>
 				</template>
@@ -430,58 +429,67 @@ templ FileInput(props InputBaseProps) {
 
 templ Select(props InputBaseProps) {
 	{{
-		varient := utils.Coalesce(props.Varient, "default")
+		varient := utils.Coalesce(props.Varient, "bg")
 		fieldId := props.BuildID()
 	}}
 	<div
-		class={ fmt.Sprintf("relative w-full flex flex-col bg-%s-light hover:bg-%s gap-y-1 px-4 py-2 rounded-lg w-full", varient, varient) }
-		data-signals={ fmt.Sprintf(`{"_%s_open":false,"_%s_selected":%s, "_%s_multiple":%t}`, fieldId, fieldId, props.Selected, fieldId, props.Multiple) }
-		data-on:click__outside={ fmt.Sprintf("$_%s_open = false", fieldId) }
+		class={ fmt.Sprintf(
+			"relative border-1 flex w-full flex-col gap-y-1 rounded-lg border-border-muted bg-%s px-4 py-2 hover:bg-border-border",
+			varient,
+		) }
+		x-data={ fmt.Sprintf(
+			`{
+				open: false,
+				selected: %s,
+				multiple: %t
+			}`,
+			props.Selected,
+			props.Multiple,
+		) }
+		@click.outside="open = false"
 	>
-		<!-- Selected chips -->
-		<label class={ fmt.Sprintf("flex text-%s-text font-bold text-xs pt-1", varient) } for={ fmt.Sprintf("select_id_%s", fieldId) }>
-			<div class="flex flex-col gap-2 w-full">
-				<span class="flex gap-2 items-center">
-					@Icon(props.LabelIcon)
+		<!-- Label -->
+		<label
+			class={ fmt.Sprintf("flex text-xs font-bold text-%s-text", varient) }
+			for={ fmt.Sprintf("select_id_%s", fieldId) }
+		>
+			<div class="flex w-full flex-col gap-2">
+				<span class="flex items-center gap-2">
+					@Icon(props.LabelIcon, "")
 					{ props.Label }
 					if props.Required {
-						<i class="text-red-500 font-bold">*</i>
+						<i class="font-bold text-red-500">*</i>
 					}
 				</span>
 			</div>
 		</label>
+		<!-- Selected values -->
 		<div
-			class="flex min-h-14 w-full flex-wrap items-center gap-2 rounded-lg p-2"
-			data-on:click={ fmt.Sprintf(
-				"evt.stopPropagation(); $_%s_open = !$_%s_open",
-				fieldId,
-				fieldId,
-			) }
+			class="flex min-h-14 w-full flex-wrap items-center gap-2 rounded-lg p-1"
+			@click.stop="open = !open"
 		>
 			for _, option := range props.Options {
 				<div
-					data-class:rounded-full={ fmt.Sprintf("$_%s_multiple", fieldId) }
-					data-class:border={ fmt.Sprintf("$_%s_multiple", fieldId) }
-					data-class:border-neutral-600={ fmt.Sprintf("$_%s_multiple", fieldId) }
-					data-class:px-2={ fmt.Sprintf("$_%s_multiple", fieldId) }
-					data-class:py-2={ fmt.Sprintf("$_%s_multiple", fieldId) }
-					class={ fmt.Sprintf("flex w-auto items-center gap-2 text-sm text-%s-text", varient) }
-					style="display: none"
-					data-show={ fmt.Sprintf(
-						"$_%s_selected.includes('%s')",
-						fieldId,
-						option.Value,
+					class={ fmt.Sprintf(
+						"flex w-auto items-center gap-2 text-sm text-%s-text",
+						varient,
 					) }
+					x-show={ fmt.Sprintf("selected.includes('%s')", option.Value) }
+					x-cloak
+					:class="multiple
+						? 'rounded-full border border-border px-2 py-2'
+						: ''"
 				>
 					<span>{ option.Label }</span>
 					if props.Multiple {
 						<button
 							type="button"
-							class={ fmt.Sprintf("flex cursor-pointer items-center justify-center rounded-full text-%s-text hover:text-red-700", varient) }
-							data-on:click={ fmt.Sprintf(
-								"evt.stopPropagation(); $_%s_selected = $_%s_selected.filter(x => x !== '%s');",
-								fieldId,
-								fieldId,
+							class={ fmt.Sprintf(
+								"flex cursor-pointer items-center justify-center rounded-full text-%s-text hover:text-danger",
+								varient,
+							) }
+							@click={ fmt.Sprintf(
+								"event.stopPropagation(); selected = selected.filter(x => x !== '%s')",
 								option.Value,
 							) }
 						>
@@ -492,92 +500,88 @@ templ Select(props InputBaseProps) {
 			}
 			<!-- Placeholder -->
 			<span
-				class="px-1 text-sm text-neutral-500"
-				data-show={ fmt.Sprintf(
-					"$_%s_selected.length === 0",
-					fieldId,
-				) }
-				style="display: none"
+				class="px-1 text-sm text-muted"
+				x-show="selected.length === 0"
+				x-cloak
 			>
 				{ props.MakePlaceholder() }
 			</span>
 			<!-- Chevron -->
-			<div class="ml-auto shrink-0 text-%s-text">
-				@Icon("chevron-down", []Attr{
-					{Name: "class", Value: "transition-transform"},
-					{Name: "data-class:rotate-180", Value: fmt.Sprintf("$_%s_open", fieldId)},
-				}...)
+			<div
+				class={ fmt.Sprintf("ml-auto shrink-0 text-%s-text", varient) }
+			>
+				@Icon("chevron-down", "transition-transform rotate-180")
 			</div>
 		</div>
 		<!-- Dropdown -->
 		<div
-			class="absolute z-50 mt-2 w-full bg-black overflow-hidden rounded-lg p-2"
-			data-show={ fmt.Sprintf(
-				"$_%s_open",
-				fieldId,
-			) }
+			class="absolute z-50 mt-2 left-0 top-0 w-full overflow-hidden rounded-lg bg-elevated p-2 shadow-xl"
+			x-show="open"
+			x-cloak
+			x-transition
 		>
 			for _, option := range props.Options {
 				<div
-					class="flex items-center gap-4 rounded-lg px-4 py-3 text-xs hover:bg-blue-800"
+					class="flex items-center gap-4 rounded-lg px-4 py-3 text-xs hover:bg-primary"
 					if !option.Disabled {
 						if props.Multiple {
-							data-on:click={ fmt.Sprintf(
-								"$_%s_selected.includes('%s') ? $_%s_selected = $_%s_selected.filter(x => x !== '%s') : $_%s_selected = [...$_%s_selected, '%s']; $_%s_open = !$_%s_open",
-								fieldId,
+							@click={ fmt.Sprintf(
+								"selected.includes('%s') ? selected = selected.filter(x => x !== '%s') : selected = [...selected, '%s']",
 								option.Value,
-								fieldId,
-								fieldId,
 								option.Value,
-								fieldId,
-								fieldId,
 								option.Value,
-								fieldId,
-								fieldId,
 							) }
 						} else {
-							data-on:click={ fmt.Sprintf(
-								"$_%s_selected = ['%s']; $_%s_open = false",
-								fieldId,
+							@click={ fmt.Sprintf(
+								"selected = ['%s']; open = false",
 								option.Value,
-								fieldId,
 							) }
 						}
 					}
 				>
 					<div class="min-w-0 flex-1">
-						<div class="font-semibold text-%s-text">
+						<div class={ fmt.Sprintf("font-semibold text-%s-text", varient) }>
 							{ option.Label }
 						</div>
 						if option.Subtitle != "" {
-							<div class="text-sm text-neutral-400">
+							<div class="text-sm text-muted">
 								{ option.Subtitle }
 							</div>
 						}
 					</div>
 					<!-- Checkmark -->
-					@Icon("check", []Attr{
-						{Name: "style", Value: "display:none;color:white;"},
-						{Name: "data-show", Value: fmt.Sprintf("$_%s_selected.includes('%s')", fieldId, option.Value)},
-					}...)
+					<span
+						x-cloak
+						x-show={ fmt.Sprintf("selected.includes('%s')", option.Value) }
+					>
+						@Icon("check", "text-primary-text")
+					</span>
 				</div>
 			}
 		</div>
 		<!-- Actual submitted values -->
 		<select
 			{ AppendAttrs([]Attr{
-				{Name: "class", Value: "sr-only hidden" },
-				{Name: "name", Value: props.Name },
-				{Name: "multiple", Hide: !props.Multiple },
+				{Name: "class", Value: "sr-only hidden"},
+				{Name: "name", Value: props.Name},
+				{Name: "multiple", Hide: !props.Multiple},
 			})... }
 		>
 			for _, option := range props.Options {
 				<option
 					{ AppendAttrs([]Attr{
-						{Name: "value", Value: option.Value },
-						{Name: "data-attr:selected", Value: fmt.Sprintf("$_%s_selected.includes('%s')",fieldId,option.Value) },
+						{Name: "value", Value: option.Value},
+						{
+							Name: ":selected",
+							Value: fmt.Sprintf(
+								"selected.includes('%s')",
+								option.Value,
+							),
+						},
 					})... }
-				>{ option.Label }</option>
+				>
+					{ option.Label }
+				</option>
 			}
 		</select>
 	</div>
@@ -608,22 +612,22 @@ templ Switch(props InputBaseProps) {
 }
 
 templ Button(props InputBaseProps) {
-	{{ varient := utils.Coalesce(props.Varient, "default") }}
+	{{ varient := utils.Coalesce(props.Varient, "primary") }}
 	<button
 		{ props.MakeAttrs([]Attr{
-            {Name: "class",Value: fmt.Sprintf("htmx-request:pointer-events-none w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-bold transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed outline-none focus:outline-none bg-%s-light border-1 border-%s-light text-%s-text hover:border-%s-dark focus:ring-2 focus:ring-%s disabled:text-red-500", varient, varient, varient, varient, varient)},
+            {Name: "class",Value: fmt.Sprintf("htmx-request:pointer-events-none w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-bold transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed outline-none focus:outline-none bg-%s border-1 border-border-muted text-%s-text hover:border-border focus:ring-2 focus:ring-%s disabled:text-red-500", varient, varient, varient)},
      }...)... }
 	>
 		if props.Loading {
 			@Spinner()
 		} else {
-			@Icon(props.IconBefore)
+			@Icon(props.IconBefore, "")
 		}
 		if (len(props.Label) > 0) {
 			<span>{ props.Label }</span>
 		} else {
 			{ children... }
 		}
-		@Icon(props.IconAfter)
+		@Icon(props.IconAfter, "")
 	</button>
 }

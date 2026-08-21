@@ -4,8 +4,57 @@ import "github.com/ashish9868/rapidbackend/templates/layouts"
 import "github.com/ashish9868/rapidbackend/models"
 
 templ DashboardHomePage(user *models.User) {
-	@layouts.PrivateLayout() {
+	@layouts.PrivateLayout(user) {
 		<h1>Hello Dashboard</h1>
 		{ user.Email }
+		<button id="start">🎤 Start</button>
+		<button id="stop">⏹ Stop</button>
+		<textarea id="text" rows="8" cols="60"></textarea>
+		<script>
+const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (!SpeechRecognition) {
+    alert("Speech recognition is not supported in this browser.");
+}
+
+const recognition = new SpeechRecognition();
+
+recognition.continuous = true;
+recognition.interimResults = true;
+recognition.lang = "en-IN";
+
+let finalText = "";
+
+recognition.onresult = (event) => {
+    let interimText = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+
+        if (event.results[i].isFinal) {
+            finalText += transcript + " ";
+        } else {
+            interimText += transcript;
+        }
+    }
+
+    document.querySelector("#text").value =
+        finalText + interimText;
+        window.document.title = `${new Date().getTime()} - DOne`
+};
+
+recognition.onerror = (event) => {
+    console.error("STT error:", event.error);
+};
+
+document.querySelector("#start").onclick = () => {
+    recognition.start();
+};
+
+document.querySelector("#stop").onclick = () => {
+    recognition.stop();
+};
+</script>
 	}
 }

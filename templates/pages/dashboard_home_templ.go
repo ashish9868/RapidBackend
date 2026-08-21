@@ -57,9 +57,13 @@ func DashboardHomePage(user *models.User) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " <button id=\"start\">🎤 Start</button> <button id=\"stop\">⏹ Stop</button> <textarea id=\"text\" rows=\"8\" cols=\"60\"></textarea><script>\nconst SpeechRecognition =\n    window.SpeechRecognition || window.webkitSpeechRecognition;\n\nif (!SpeechRecognition) {\n    alert(\"Speech recognition is not supported in this browser.\");\n}\n\nconst recognition = new SpeechRecognition();\n\nrecognition.continuous = true;\nrecognition.interimResults = true;\nrecognition.lang = \"en-IN\";\n\nlet finalText = \"\";\n\nrecognition.onresult = (event) => {\n    let interimText = \"\";\n\n    for (let i = event.resultIndex; i < event.results.length; i++) {\n        const transcript = event.results[i][0].transcript;\n\n        if (event.results[i].isFinal) {\n            finalText += transcript + \" \";\n        } else {\n            interimText += transcript;\n        }\n    }\n\n    document.querySelector(\"#text\").value =\n        finalText + interimText;\n        window.document.title = `${new Date().getTime()} - DOne`\n};\n\nrecognition.onerror = (event) => {\n    console.error(\"STT error:\", event.error);\n};\n\ndocument.querySelector(\"#start\").onclick = () => {\n    recognition.start();\n};\n\ndocument.querySelector(\"#stop\").onclick = () => {\n    recognition.stop();\n};\n</script>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 			return nil
 		})
-		templ_7745c5c3_Err = layouts.PrivateLayout().Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layouts.PrivateLayout(user).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

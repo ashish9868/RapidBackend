@@ -1,8 +1,10 @@
 package components
 
-templ Icon(name string, attrs ...Attr) {
+import "fmt"
+
+templ Icon(name string, additionClasses string) {
 	if (len(name) > 0) {
-		<i class={ "ti ti-" + name } { AppendAttrs(attrs)... }></i>
+		<i class={ fmt.Sprintf("ti ti-%s %s", name, additionClasses) }></i>
 	}
 }
 

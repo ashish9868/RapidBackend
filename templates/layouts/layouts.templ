@@ -1,0 +1,328 @@
+package layouts
+
+import "github.com/ashish9868/rapidbackend/models"
+
+templ PublicLayout() {
+	@BaseLayout() {
+		<div class="flex flex-col gap-4 w-full max-w-sm justify-center justify-self-center items-center min-h-screen py-6">
+			<div class="text-white font-bold flex flex-col min-h-[150px] text-center items-center">
+				<img width={ 100 } src={ "/static/logo.svg" } alt="Rapid Backend"/>
+				<p>Superadmin Login</p>
+			</div>
+			{ children... }
+		</div>
+	}
+}
+
+templ PrivateLayout(user *models.User) {
+	@BaseLayout() {
+		<div class="flex h-screen overflow-hidden">
+			<!-- Sidebar -->
+			@Sidebar(user)
+			<!-- Main Section -->
+			<div class="flex-1 flex flex-col min-w-0 bg-slate-50">
+				<!-- Top Header -->
+				<header class="h-16 bg-white border-b border-slate-200/80 flex items-center justify-between px-6 sticky top-0 z-10">
+					<div class="flex items-center gap-4">
+						<button class="lg:hidden text-slate-600 hover:text-slate-900 focus:outline-none">
+							<i class="ti ti-menu-2 text-2xl"></i>
+						</button>
+						<!-- Search Bar -->
+						<div class="relative w-64 md:w-80">
+							<i class="ti ti-search absolute left-3 top-2.5 text-slate-400 text-sm"></i>
+							<input type="text" placeholder="Search orders, clients, reports... (Cmd + K)" class="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-100/80 border border-transparent rounded-lg focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition"/>
+						</div>
+					</div>
+					<!-- Action Items -->
+					<div class="flex items-center gap-3">
+						<div class="hidden sm:flex items-center gap-2 border-r border-slate-200 pr-4 mr-1">
+							<button class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">
+								<i class="ti ti-calendar text-slate-400 text-sm"></i> Aug 1 - Aug 21, 2026
+							</button>
+						</div>
+						<button class="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition">
+							<i class="ti ti-bell text-lg"></i>
+							<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full ring-2 ring-white"></span>
+						</button>
+						<button class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition">
+							<i class="ti ti-message-dots text-lg"></i>
+						</button>
+						<button class="ml-2 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm shadow-indigo-500/20">
+							<i class="ti ti-plus text-sm"></i>
+							<span class="hidden sm:inline">New Transaction</span>
+						</button>
+					</div>
+				</header>
+				<!-- Dashboard View Content -->
+				<main class="p-6 space-y-6 overflow-y-auto">
+					<!-- Header Info -->
+					<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+						<div>
+							<h1 class="text-xl font-bold text-slate-900 tracking-tight">Executive Dashboard</h1>
+							<p class="text-xs text-slate-500 mt-0.5">Real-time performance indicators and operational updates.</p>
+						</div>
+						<div class="flex items-center gap-2">
+							<button class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition">
+								<i class="ti ti-download text-slate-400"></i> Export PDF
+							</button>
+							<button class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition">
+								<i class="ti ti-filter text-slate-400"></i> Filters
+							</button>
+						</div>
+					</div>
+					<!-- Key Metrics Cards Grid -->
+					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+						<!-- Card 1 -->
+						<div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition duration-200">
+							<div class="flex items-center justify-between">
+								<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Revenue</span>
+								<span class="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+									<i class="ti ti-currency-dollar text-lg"></i>
+								</span>
+							</div>
+							<div class="mt-4 flex items-baseline justify-between">
+								<h3 class="text-2xl font-bold text-slate-900 tracking-tight">$128,420.00</h3>
+							</div>
+							<div class="mt-2 flex items-center gap-2">
+								<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
+									<i class="ti ti-arrow-up-right"></i> 14.2%
+								</span>
+								<span class="text-[11px] text-slate-400">vs last month</span>
+							</div>
+						</div>
+						<!-- Card 2 -->
+						<div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition duration-200">
+							<div class="flex items-center justify-between">
+								<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Subscriptions</span>
+								<span class="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+									<i class="ti ti-users-group text-lg"></i>
+								</span>
+							</div>
+							<div class="mt-4 flex items-baseline justify-between">
+								<h3 class="text-2xl font-bold text-slate-900 tracking-tight">3,842</h3>
+							</div>
+							<div class="mt-2 flex items-center gap-2">
+								<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
+									<i class="ti ti-arrow-up-right"></i> 8.1%
+								</span>
+								<span class="text-[11px] text-slate-400">vs last month</span>
+							</div>
+						</div>
+						<!-- Card 3 -->
+						<div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition duration-200">
+							<div class="flex items-center justify-between">
+								<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Average Order</span>
+								<span class="p-2 rounded-lg bg-amber-50 text-amber-600">
+									<i class="ti ti-shopping-bag text-lg"></i>
+								</span>
+							</div>
+							<div class="mt-4 flex items-baseline justify-between">
+								<h3 class="text-2xl font-bold text-slate-900 tracking-tight">$312.50</h3>
+							</div>
+							<div class="mt-2 flex items-center gap-2">
+								<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/50">
+									<i class="ti ti-arrow-down-right"></i> 2.4%
+								</span>
+								<span class="text-[11px] text-slate-400">vs last month</span>
+							</div>
+						</div>
+						<!-- Card 4 -->
+						<div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition duration-200">
+							<div class="flex items-center justify-between">
+								<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Conversion Rate</span>
+								<span class="p-2 rounded-lg bg-blue-50 text-blue-600">
+									<i class="ti ti-target-arrow text-lg"></i>
+								</span>
+							</div>
+							<div class="mt-4 flex items-baseline justify-between">
+								<h3 class="text-2xl font-bold text-slate-900 tracking-tight">4.18%</h3>
+							</div>
+							<div class="mt-2 flex items-center gap-2">
+								<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
+									<i class="ti ti-arrow-up-right"></i> 0.6%
+								</span>
+								<span class="text-[11px] text-slate-400">vs last month</span>
+							</div>
+						</div>
+					</div>
+					<!-- Charts Section -->
+					<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+						<!-- Main Chart -->
+						<div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
+							<div class="flex items-center justify-between mb-4">
+								<div>
+									<h2 class="text-base font-bold text-slate-900">Revenue Flow</h2>
+									<p class="text-xs text-slate-500">Gross revenue vs operational costs over time.</p>
+								</div>
+								<div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+									<button class="px-2.5 py-1 text-xs font-medium bg-white text-slate-800 rounded-md shadow-xs">Monthly</button>
+									<button class="px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-slate-800">Weekly</button>
+								</div>
+							</div>
+							<div class="h-64 relative">
+								<canvas id="revenueChart"></canvas>
+							</div>
+						</div>
+						<!-- Traffic Breakdown Chart -->
+						<div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+							<div>
+								<div class="flex items-center justify-between mb-2">
+									<h2 class="text-base font-bold text-slate-900">Traffic Sources</h2>
+									<button class="text-slate-400 hover:text-slate-600"><i class="ti ti-dots-vertical"></i></button>
+								</div>
+								<p class="text-xs text-slate-500 mb-4">Distribution by primary channel</p>
+								<div class="h-44 relative flex items-center justify-center">
+									<canvas id="trafficChart"></canvas>
+								</div>
+							</div>
+							<div class="space-y-2 mt-4 border-t border-slate-100 pt-3">
+								<div class="flex items-center justify-between text-xs">
+									<div class="flex items-center gap-2">
+										<span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+										<span class="text-slate-600 font-medium">Direct Search</span>
+									</div>
+									<span class="font-semibold text-slate-800">45%</span>
+								</div>
+								<div class="flex items-center justify-between text-xs">
+									<div class="flex items-center gap-2">
+										<span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+										<span class="text-slate-600 font-medium">Social / Referral</span>
+									</div>
+									<span class="font-semibold text-slate-800">30%</span>
+								</div>
+								<div class="flex items-center justify-between text-xs">
+									<div class="flex items-center gap-2">
+										<span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+										<span class="text-slate-600 font-medium">Email Campaigns</span>
+									</div>
+									<span class="font-semibold text-slate-800">25%</span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Transactions Table Card -->
+					<div class="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+						<div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+							<div>
+								<h2 class="text-base font-bold text-slate-900">Recent Transactions</h2>
+								<p class="text-xs text-slate-500">Overview of recent billing events across all accounts.</p>
+							</div>
+							<div class="flex items-center gap-2">
+								<div class="relative">
+									<i class="ti ti-search absolute left-2.5 top-2 text-slate-400 text-xs"></i>
+									<input type="text" placeholder="Filter rows..." class="pl-8 pr-3 py-1 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"/>
+								</div>
+								<button class="px-3 py-1 text-xs font-medium border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">View All</button>
+							</div>
+						</div>
+						<div class="overflow-x-auto">
+							<table class="w-full text-left text-xs text-slate-600">
+								<thead class="bg-slate-50/80 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
+									<tr>
+										<th class="py-3 px-6 font-semibold">Transaction ID</th>
+										<th class="py-3 px-6 font-semibold">Customer</th>
+										<th class="py-3 px-6 font-semibold">Status</th>
+										<th class="py-3 px-6 font-semibold">Date</th>
+										<th class="py-3 px-6 font-semibold text-right">Amount</th>
+										<th class="py-3 px-6 font-semibold text-center">Action</th>
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-slate-100 font-normal">
+									<tr class="hover:bg-slate-50/80 transition">
+										<td class="py-3.5 px-6 font-mono text-slate-500">#TRX-8492</td>
+										<td class="py-3.5 px-6">
+											<div class="flex items-center gap-2.5">
+												<div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center font-semibold text-slate-700 text-xs">AM</div>
+												<div>
+													<p class="font-medium text-slate-800 leading-none">Alex Morgan</p>
+													<p class="text-[11px] text-slate-400 mt-0.5">alex@enterprise.com</p>
+												</div>
+											</div>
+										</td>
+										<td class="py-3.5 px-6">
+											<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+												<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Settled
+											</span>
+										</td>
+										<td class="py-3.5 px-6 text-slate-500">Aug 21, 2026</td>
+										<td class="py-3.5 px-6 text-right font-semibold text-slate-900">$1,250.00</td>
+										<td class="py-3.5 px-6 text-center">
+											<button class="text-slate-400 hover:text-slate-600 p-1"><i class="ti ti-dots text-base"></i></button>
+										</td>
+									</tr>
+									<tr class="hover:bg-slate-50/80 transition">
+										<td class="py-3.5 px-6 font-mono text-slate-500">#TRX-8491</td>
+										<td class="py-3.5 px-6">
+											<div class="flex items-center gap-2.5">
+												<div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center font-semibold text-slate-700 text-xs">LJ</div>
+												<div>
+													<p class="font-medium text-slate-800 leading-none">Liam Johnson</p>
+													<p class="text-[11px] text-slate-400 mt-0.5">liam@design.co</p>
+												</div>
+											</div>
+										</td>
+										<td class="py-3.5 px-6">
+											<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
+												<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+											</span>
+										</td>
+										<td class="py-3.5 px-6 text-slate-500">Aug 20, 2026</td>
+										<td class="py-3.5 px-6 text-right font-semibold text-slate-900">$320.50</td>
+										<td class="py-3.5 px-6 text-center">
+											<button class="text-slate-400 hover:text-slate-600 p-1"><i class="ti ti-dots text-base"></i></button>
+										</td>
+									</tr>
+									<tr class="hover:bg-slate-50/80 transition">
+										<td class="py-3.5 px-6 font-mono text-slate-500">#TRX-8490</td>
+										<td class="py-3.5 px-6">
+											<div class="flex items-center gap-2.5">
+												<div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center font-semibold text-slate-700 text-xs">EW</div>
+												<div>
+													<p class="font-medium text-slate-800 leading-none">Emma Watson</p>
+													<p class="text-[11px] text-slate-400 mt-0.5">emma@studio.io</p>
+												</div>
+											</div>
+										</td>
+										<td class="py-3.5 px-6">
+											<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60">
+												<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Declined
+											</span>
+										</td>
+										<td class="py-3.5 px-6 text-slate-500">Aug 19, 2026</td>
+										<td class="py-3.5 px-6 text-right font-semibold text-slate-900">$840.00</td>
+										<td class="py-3.5 px-6 text-center">
+											<button class="text-slate-400 hover:text-slate-600 p-1"><i class="ti ti-dots text-base"></i></button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</main>
+			</div>
+		</div>
+		<!-- Chart Scripts Initialization -->
+	}
+}
+
+templ RunJs() {
+	<script>
+            document.addEventListener("DOMContentLoaded", () => {
+                document.querySelectorAll("[data-flatpicker]:not([data-flatpicker-initialized])")
+                    .forEach((el) => {
+                        const altFormat = el.getAttribute('data-altformat')
+                        const dateFormat = el.getAttribute('data-dateformat')
+                        flatpickr(el, {
+                            altInput: true,
+                            time_24hr: true,
+                            allowInput: true,
+                            altFormat: altFormat ?? "m/d/Y",
+                            dateFormat: dateFormat ?? "Y-m-d",
+                            enableTime: `${dateFormat}`.includes('H') ? true: false,
+                            noCalendar: `${dateFormat}`.includes('Y') ? false: true,
+                        });
+                        el.dataset.flatpickrInitialized = "true";
+                    });
+            });
+    </script>
+}

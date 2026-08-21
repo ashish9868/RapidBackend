@@ -25,6 +25,14 @@ func (r *webRouter) registerRoutes() {
 	app := r.App
 	authMiddleware := middlewares.AuthMiddleware(app.AccessTokenRepository, true, false)
 	app.ResourceRoutes("login", app.RootRouter, *superadmin.SuperAdminLoginHandler())
+	app.ResourceRoutes("logout", app.RootRouter, core.ResourceHandler{
+		Index: &core.ResourceAction{
+			Handler: func(w http.ResponseWriter, r *http.Request, app *core.App) {
+
+				app.Logout(w, r)
+			},
+		},
+	})
 	app.ResourceRoutes("dashboard", app.RootRouter, *handlers.DashboardHandler(), authMiddleware)
 	app.ResourceRoutes("create", app.RootRouter, core.ResourceHandler{
 		Index: &core.ResourceAction{

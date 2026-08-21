@@ -59,22 +59,26 @@ func Logger(next http.Handler) http.Handler {
 	})
 }
 
+func GetAccessTokenFromRequest(r *http.Request) string {
+	accessToken := ""
+	cookie, _ := r.Cookie("__auth")
+
+	auth := r.Header.Get("Authorization")
+
+	if !(len(auth) < 7 || !strings.EqualFold(auth[:7], "Bearer ")) {
+		accessToken = strings.TrimSpace(auth[7:])
+	}
+	if len(accessToken) < 1 && cookie != nil {
+		accessToken = cookie.Value
+	}
+	return accessToken
+}
+
 func AuthMiddleware(repo *repository.AccessTokenRepository, redirect bool, throw bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			accessToken := ""
-			cookie, _ := r.Cookie("__auth")
 
-			auth := r.Header.Get("Authorization")
-
-			if !(len(auth) < 7 || !strings.EqualFold(auth[:7], "Bearer ")) {
-				accessToken = strings.TrimSpace(auth[7:])
-			}
-
-			if len(accessToken) < 1 && cookie != nil {
-				accessToken = cookie.Value
-			}
-
+			accessToken := GetAccessTokenFromRequest(r)
 			isHtmx := utils.IsHtmx(r)
 			user := repo.GetUserFromToken(accessToken)
 			if user != nil {
