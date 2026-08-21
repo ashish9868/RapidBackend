@@ -283,9 +283,71 @@ templ Input(props InputBaseProps) {
 
 templ FileInput(props InputBaseProps) {
 	@InputBase(props) {
-		{{ varient := utils.Coalesce(props.Varient, "default") }}
+		{{
+			varient := utils.Coalesce(props.Varient, "default")
+			xData := fmt.Sprintf(`{
+				max: %d,
+				files: [],
+				addFiles(fileList) {
+					const newFiles = [...fileList]
+						.slice(0, this.max - this.files.length)
+						.map(file => ({
+							id: crypto.randomUUID(),
+							file,
+							preview: file.type.startsWith("image/")
+								? URL.createObjectURL(file)
+								: null
+						}));
+
+					this.files.push(...newFiles);
+					this.syncInput();
+				},
+
+				remove(index) {
+					const item = this.files[index];
+
+					if (item?.preview) {
+						URL.revokeObjectURL(item.preview);
+					}
+
+					this.files.splice(index, 1);
+					this.syncInput();
+				},
+
+				clear() {
+					this.files.forEach(item => {
+						if (item.preview) {
+							URL.revokeObjectURL(item.preview);
+						}
+					});
+
+					this.files = [];
+					this.$refs.input.value = "";
+				},
+
+				syncInput() {
+					const dt = new DataTransfer();
+
+					this.files.forEach(item => {
+						dt.items.add(item.file);
+					});
+
+					this.$refs.input.files = dt.files;
+				},
+
+				formatSize(bytes) {
+					if (bytes < 1024)
+						return bytes + " B";
+
+					if (bytes < 1024 * 1024)
+						return (bytes / 1024).toFixed(1) + " KB";
+
+					return (bytes / 1024 / 1024).toFixed(1) + " MB";
+				}
+			}`, props.Max)
+		}}
 		<div
-			x-data={ fmt.Sprintf(`fileInput(%d)`, props.Max) }
+			x-data={ xData }
 			class="w-full"
 		>
 			<input
@@ -304,15 +366,33 @@ templ FileInput(props InputBaseProps) {
 				@click="$refs.input.click()"
 				@dragover.prevent
 				@drop.prevent="addFiles($event.dataTransfer.files)"
-				class={ fmt.Sprintf("cursor-pointer border-dotted border-1 rounded-lg bg-%s px-2 my-2 py-4 text-center border-%s-text hover:bg-%s-dark", varient, varient, varient) }
+				class={ fmt.Sprintf(
+					"cursor-pointer border-dotted border-1 rounded-lg bg-%s px-2 my-2 py-4 text-center border-%s-text hover:bg-%s-dark",
+					varient,
+					varient,
+					varient,
+				) }
 			>
-				<div class={ fmt.Sprintf("mt-1 text-xs text-%s-text flex flex-col", varient) }>
-					<small>Maximum { fmt.Sprintf("%d", props.Max) } files are allowed.</small>
+				<div
+					class={ fmt.Sprintf(
+						"mt-1 text-xs text-%s-text flex flex-col",
+						varient,
+					) }
+				>
+					<small>
+						Maximum { fmt.Sprintf("%d", props.Max) } files are allowed.
+					</small>
 				</div>
 			</div>
 			<div class="space-y-2">
 				<template x-for="(file, index) in files" :key="file.id">
-					<div class={ fmt.Sprintf("flex items-center gap-3 rounded-lg bg-%s text-%s-text p-2", varient, varient) }>
+					<div
+						class={ fmt.Sprintf(
+							"flex items-center gap-3 rounded-lg bg-%s text-%s-text p-2",
+							varient,
+							varient,
+						) }
+					>
 						<template x-if="file.preview">
 							<img
 								:src="file.preview"
@@ -337,97 +417,13 @@ templ FileInput(props InputBaseProps) {
 						<button
 							type="button"
 							@click="remove(index)"
-							class={ fmt.Sprintf("rounded-full p-1 bg-red-500 hover:bg-red-600 text-white cursor-pointer") }
+							class="rounded-full p-1 bg-red-500 hover:bg-red-600 text-white cursor-pointer"
 						>
 							@Icon("x")
 						</button>
 					</div>
 				</template>
 			</div>
-			<script>
-            function fileInput(max) {
-                return {
-                    files: [],
-
-                    addFiles(fileList) {
-                        const newFiles = [...fileList]
-                            .slice(0, max - this.files.length)
-                            .map(file => ({
-                                id: crypto.randomUUID(),
-                                file: file,
-                                preview: file.type.startsWith("image/")
-                                    ? URL.createObjectURL(file)
-                                    : null
-                            }));
-
-                        this.files.push(...newFiles);
-
-                        // Keep the actual input in sync for form submission.
-                        const dt = new DataTransfer();
-
-                        this.files.forEach(item => {
-                            dt.items.add(item.file);
-                        });
-
-                        this.$refs.input.files = dt.files;
-                    },
-
-                    remove(index) {
-                        const item = this.files[index];
-
-                        if (item?.preview) {
-                            URL.revokeObjectURL(item.preview);
-                        }
-
-                        this.files.splice(index, 1);
-
-                        const dt = new DataTransfer();
-
-                        this.files.forEach(item => {
-                            dt.items.add(item.file);
-                        });
-
-                        this.$refs.input.files = dt.files;
-                    },
-
-                    clear() {
-                        this.files.forEach(item => {
-                            if (item.preview) {
-                                URL.revokeObjectURL(item.preview);
-                            }
-                        });
-
-                        this.files = [];
-                        this.$refs.input.value = "";
-                    },
-
-                    getValue() {
-                        if (max > 1) {
-                            return this.files.map(item => item.file);
-                        }
-
-                        return this.files[0]?.file ?? null;
-                    },
-
-                    setValue(files) {
-                        this.clear();
-                        this.addFiles(files);
-                    },
-
-                    formatSize(bytes) {
-                        if (bytes < 1024) {
-                            return `${bytes} B`;
-                        }
-
-                        if (bytes < 1024 * 1024) {
-                            return `${(bytes / 1024).toFixed(1)} KB`;
-                        }
-
-                        return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-                    }
-                }
-            }
-        </script>
 		</div>
 	}
 }
