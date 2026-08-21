@@ -1,0 +1,633 @@
+package components
+
+import (
+	"fmt"
+	"github.com/ashish9868/rapidbackend/utils"
+	"github.com/samber/lo"
+	"strings"
+)
+
+const (
+	DATE_FORMAT             = "Y-m-d"
+	TIME_FORMAT             = "H:i:S"
+	DATETIME_FORMAT         = "Y-m-d H:i:S"
+	DISPLAY_DATE_FORMAT     = "m/d/Y"
+	DISPLAY_TIME_FORMAT     = "H:i"
+	DISPLAY_DATETIME_FORMAT = "m/d/Y H:i"
+)
+
+type Attr struct {
+	Name  string
+	Value string
+	Hide  bool
+}
+
+type FormProps struct {
+	ID      string
+	Action  string
+	Method  string
+	Errors  map[string]string
+	Fields  []InputBaseProps
+	Attrs   []Attr
+	Signals templ.Attributes
+}
+
+type InputBaseProps struct {
+	ID              string
+	Varient         string
+	Loading         bool
+	Label           string
+	Type            string
+	Name            string
+	Placeholder     string
+	Value           string
+	Required        bool
+	LabelIcon       string
+	IconBefore      string
+	IconAfter       string
+	Error           string
+	HelperText      string
+	ReadOnly        bool
+	Disabled        bool
+	Attrs           []Attr
+	Selected        []string
+	Options         []SelectOption
+	Multiple        bool
+	CustomComponent templ.Component
+	ItemSize        int
+	Max             int
+	Accept          string
+}
+
+type SelectOption struct {
+	Label    string
+	Subtitle string
+	Value    string
+	Disabled bool
+	Attrs    []Attr
+}
+
+func (f *InputBaseProps) Render() templ.Component {
+	switch f.Type {
+	case "select":
+		return Select(*f)
+	case "file":
+		return FileInput(*f)
+	case "switch":
+		return Switch(*f)
+	case "button", "submit", "reset":
+		return Button(*f)
+	case "custom":
+		return f.CustomComponent
+	}
+	return Input(*f)
+}
+
+func (f *InputBaseProps) BuildID() string {
+	return fmt.Sprintf("field_%s", utils.Coalesce(f.ID, f.Name))
+}
+
+func (b *InputBaseProps) MakePlaceholder() string {
+	if strings.Contains(b.Type, "date") && strings.Contains(b.Type, "time") {
+		return getAttribute(b.Attrs, "data-altformat", "MM/DD/YYYY HH:MM")
+	} else if strings.Contains(b.Type, "date") {
+		return getAttribute(b.Attrs, "data-altformat", "MM/DD/YYYY")
+	} else if strings.Contains(b.Type, "time") {
+		return "HH:MM"
+	}
+	if len(b.Placeholder) > 0 {
+		return b.Placeholder
+	}
+	return "Please enter " + b.Label
+}
+
+func (b *InputBaseProps) MakeAttrs(moreAttrs ...Attr) templ.Attributes {
+	attrs := append(b.Attrs, moreAttrs...)
+	if b.Type == "button" {
+		return AppendAttrs(attrs, []Attr{
+			{Name: "disabled", Hide: !b.Disabled},
+			{Name: "type", Value: utils.Coalesce(b.Type, "button")},
+		}...)
+	}
+	isDateOrTimeField := strings.Contains(b.Type, "date") || strings.Contains(b.Type, "time")
+	attrs = append(attrs, []Attr{
+		{Name: "disabled", Hide: !b.Disabled},
+		{Name: "readonly", Hide: !b.ReadOnly},
+		{Name: "required", Hide: !b.Required},
+		{Name: "autocomplete", Value: "off"},
+		{Name: "name", Value: fmt.Sprintf(`%s`, b.Name)},
+		{Name: "placeholder", Value: b.MakePlaceholder()},
+	}...)
+	if isDateOrTimeField {
+		attrs = append(attrs, []Attr{
+			{Name: "type", Value: "text"},
+			{Name: "data-flatpicker"},
+			{Name: "data-altformat", Value: getAttribute(attrs, "data-altformat", DISPLAY_DATE_FORMAT)},
+			{Name: "data-dateformat", Value: getAttribute(attrs, "data-dateformat", DATE_FORMAT)},
+		}...)
+	} else if strings.EqualFold(b.Type, "textarea") {
+	} else if strings.EqualFold(getAttribute(attrs, "type", b.Type), "checkbox") {
+		attrs = append(attrs, Attr{Name: "type", Value: "checkbox"})
+	} else if strings.EqualFold(getAttribute(attrs, "type", b.Type), "radio") {
+		attrs = append(attrs, Attr{Name: "type", Value: "radio"})
+	} else {
+		attrs = append(attrs, Attr{Name: "type", Value: utils.Coalesce(b.Type, "text")})
+		attrs = append(attrs, Attr{Name: "value", Value: utils.Coalesce(b.Value, "")})
+	}
+
+	if strings.EqualFold(b.Type, "password") {
+		attrs = append(attrs, Attr{
+			Name: "autocomplete", Value: "off",
+		})
+	}
+	if isDateOrTimeField {
+		attrs = append(attrs, Attr{
+			Name: "autocomplete", Value: "bday",
+		})
+	}
+	return AppendAttrs(attrs)
+}
+
+func AppendAttrs(attrs []Attr, list ...Attr) templ.Attributes {
+
+	result := templ.Attributes{}
+	finalAttrs := append(attrs, list...)
+	for _, attr := range finalAttrs {
+		if !attr.Hide {
+			value := attr.Value
+			if value == "" {
+				//value = attr.Name
+			}
+			result[attr.Name] = value
+		}
+	}
+	return result
+}
+
+func getAttribute(attrs []Attr, key string, defaultValue string) string {
+	for _, attr := range attrs {
+		if strings.EqualFold(attr.Name, key) {
+			return utils.Coalesce(attr.Value, defaultValue)
+		}
+	}
+	return defaultValue
+}
+
+templ Form(formProps *FormProps) {
+	{{ globalError := lo.ValueOr(formProps.Errors, "global", "") }}
+	<form
+		{ formProps.Signals... }
+		{ AppendAttrs(formProps.Attrs, []Attr{
+        {Name: "id", Value: formProps.ID},
+        {Name: "action", Value: formProps.Action},
+        {Name: "method", Value: utils.ToString(utils.Coalesce(formProps.Method, "POST"))},
+        {Name: "class", Value: "p-1 grid grid-cols-12 gap-3 w-full relative"},
+        {Name: "autocomplete", Value: "off"},
+        {Name: "hx-disabled-elt", Value: "button[type=submit]"},
+        {Name: "hx-disabled-elt", Value: "this"},
+        {Name: "hx-target", Value: fmt.Sprintf("#%s", formProps.ID)},
+        {Name: strings.ToLower(fmt.Sprintf("hx-%s", formProps.Method)), Value:  formProps.Action},
+        {Name: "hx-swap", Value:  "outerHTML"},
+    }...)... }
+	>
+		<div class="htmx-indicator absolute bg-default-text/20 z-999 flex items-center justify-center inset-0">
+			@Spinner()
+		</div>
+		if len(utils.ToString(globalError)) > 0 {
+			<div class="col-span-12">
+				<p class="text-red-500">{ utils.ToString(globalError) }</p>
+			</div>
+		}
+		for _, field := range formProps.Fields {
+			<div class={ fmt.Sprintf("col-span-%s", utils.ToString(utils.Coalesce(field.ItemSize, 12))) }>
+				@field.Render()
+			</div>
+		}
+	</form>
+}
+
+templ InputBase(props InputBaseProps) {
+	{{
+		fieldId := props.BuildID()
+		varient := utils.Coalesce(props.Varient, "default")
+	}}
+	<div class={ fmt.Sprintf("flex flex-col bg-%s border-1 border-%s-light hover:border-%s hover:border-1 gap-y-1 px-4 py-2 rounded-lg", varient, varient, varient) }>
+		<label class={ fmt.Sprintf("flex text-%s-text font-bold text-xs pt-1", varient) } for={ fieldId }>
+			<div class="flex flex-col gap-2 w-full">
+				<span class="flex gap-2 items-center">
+					@Icon(props.LabelIcon)
+					{ props.Label }
+					if props.Required {
+						<i class="text-red-500 font-bold">*</i>
+					}
+				</span>
+				<div class="w-full">
+					{ children... }
+				</div>
+			</div>
+		</label>
+		if len(props.Error) > 0 {
+			<p class="text-[0.65rem] text-red-400">{ props.Error }</p>
+		} else if len(props.HelperText) > 0 {
+			<small class={ fmt.Sprintf("text-[0.65rem] text-%s-text", varient) }>{ props.HelperText }</small>
+		}
+	</div>
+}
+
+templ Input(props InputBaseProps) {
+	@InputBase(props) {
+		{{ varient := utils.Coalesce(props.Varient, "default") }}
+		<div
+			{ AppendAttrs([]Attr{
+            {Name: "x-data", Value: "{showPass: false}", Hide: props.Type != "password"},
+            {Name: "class", Value: "flex justify-between py-1 relative"},
+        })... }
+		>
+			@Icon(props.IconBefore)
+			if (strings.EqualFold(props.Type, "textarea")) {
+				<textarea
+					@input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
+					{ props.MakeAttrs(Attr{
+                Name: "class",
+                Value: fmt.Sprintf("w-full outline-none focus-none text-%s-text text-xs py-1 resize-none overflow-hidden", varient),
+            })... }
+				>{ props.Value }</textarea>
+			} else {
+				<input
+					{ props.MakeAttrs([]Attr{
+                        {Name: "class", Value: fmt.Sprintf("w-full outline-none focus-none text-%s-text text-xs py-1", varient)},
+                    	{Name: "x-bind:type", Value: "showPass ? 'text':'password'", Hide: props.Type != "password"},
+                    }...)... }
+				/>
+			}
+			@Icon(props.IconAfter)
+			if (strings.EqualFold(props.Type, "password")) {
+				<button
+					{ AppendAttrs([]Attr{
+						{Name: "type", Value: "button"},
+						{Name: "class", Value: fmt.Sprintf("text-%s-text", varient)},
+						{Name: "x-on:click", Value: "showPass = !showPass"},
+                })... }
+				>
+					@Icon("eye", []Attr{
+						{Name: "x-show", Value: "!showPass"},
+					}...)
+					@Icon("eye-off", []Attr{
+						{Name: "x-show", Value: "showPass"},
+					}...)
+				</button>
+			}
+		</div>
+	}
+}
+
+templ FileInput(props InputBaseProps) {
+	@InputBase(props) {
+		{{ varient := utils.Coalesce(props.Varient, "default") }}
+		<div
+			x-data={ fmt.Sprintf(`fileInput(%d)`, props.Max) }
+			class="w-full"
+		>
+			<input
+				type="file"
+				name={ props.Name }
+				accept={ props.Accept }
+				if props.Max > 1 {
+					multiple
+				}
+				hidden
+				x-ref="input"
+				@change="addFiles($event.target.files)"
+			/>
+			<div
+				x-show={ fmt.Sprintf("files.length < %d", props.Max) }
+				@click="$refs.input.click()"
+				@dragover.prevent
+				@drop.prevent="addFiles($event.dataTransfer.files)"
+				class={ fmt.Sprintf("cursor-pointer border-dotted border-1 rounded-lg bg-%s px-2 my-2 py-4 text-center border-%s-text hover:bg-%s-dark", varient, varient, varient) }
+			>
+				<div class={ fmt.Sprintf("mt-1 text-xs text-%s-text flex flex-col", varient) }>
+					<small>Maximum { fmt.Sprintf("%d", props.Max) } files are allowed.</small>
+				</div>
+			</div>
+			<div class="space-y-2">
+				<template x-for="(file, index) in files" :key="file.id">
+					<div class={ fmt.Sprintf("flex items-center gap-3 rounded-lg bg-%s text-%s-text p-2", varient, varient) }>
+						<template x-if="file.preview">
+							<img
+								:src="file.preview"
+								class="h-16 w-16 rounded object-cover"
+							/>
+						</template>
+						<template x-if="!file.preview">
+							<div class="flex h-16 w-16 items-center justify-center rounded bg-surface-hover text-3xl">
+								📄
+							</div>
+						</template>
+						<div class="flex-1 overflow-hidden">
+							<div
+								class={ fmt.Sprintf("truncate text-sm text-%s-text", varient) }
+								x-text="file.file.name"
+							></div>
+							<div
+								class={ fmt.Sprintf("text-xs text-%s-text", varient) }
+								x-text="formatSize(file.file.size)"
+							></div>
+						</div>
+						<button
+							type="button"
+							@click="remove(index)"
+							class={ fmt.Sprintf("rounded-full p-1 bg-red-500 hover:bg-red-600 text-white cursor-pointer") }
+						>
+							@Icon("x")
+						</button>
+					</div>
+				</template>
+			</div>
+			<script>
+            function fileInput(max) {
+                return {
+                    files: [],
+
+                    addFiles(fileList) {
+                        const newFiles = [...fileList]
+                            .slice(0, max - this.files.length)
+                            .map(file => ({
+                                id: crypto.randomUUID(),
+                                file: file,
+                                preview: file.type.startsWith("image/")
+                                    ? URL.createObjectURL(file)
+                                    : null
+                            }));
+
+                        this.files.push(...newFiles);
+
+                        // Keep the actual input in sync for form submission.
+                        const dt = new DataTransfer();
+
+                        this.files.forEach(item => {
+                            dt.items.add(item.file);
+                        });
+
+                        this.$refs.input.files = dt.files;
+                    },
+
+                    remove(index) {
+                        const item = this.files[index];
+
+                        if (item?.preview) {
+                            URL.revokeObjectURL(item.preview);
+                        }
+
+                        this.files.splice(index, 1);
+
+                        const dt = new DataTransfer();
+
+                        this.files.forEach(item => {
+                            dt.items.add(item.file);
+                        });
+
+                        this.$refs.input.files = dt.files;
+                    },
+
+                    clear() {
+                        this.files.forEach(item => {
+                            if (item.preview) {
+                                URL.revokeObjectURL(item.preview);
+                            }
+                        });
+
+                        this.files = [];
+                        this.$refs.input.value = "";
+                    },
+
+                    getValue() {
+                        if (max > 1) {
+                            return this.files.map(item => item.file);
+                        }
+
+                        return this.files[0]?.file ?? null;
+                    },
+
+                    setValue(files) {
+                        this.clear();
+                        this.addFiles(files);
+                    },
+
+                    formatSize(bytes) {
+                        if (bytes < 1024) {
+                            return `${bytes} B`;
+                        }
+
+                        if (bytes < 1024 * 1024) {
+                            return `${(bytes / 1024).toFixed(1)} KB`;
+                        }
+
+                        return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+                    }
+                }
+            }
+        </script>
+		</div>
+	}
+}
+
+templ Select(props InputBaseProps) {
+	{{
+		varient := utils.Coalesce(props.Varient, "default")
+		fieldId := props.BuildID()
+	}}
+	<div
+		class={ fmt.Sprintf("relative w-full flex flex-col bg-%s-light hover:bg-%s gap-y-1 px-4 py-2 rounded-lg w-full", varient, varient) }
+		data-signals={ fmt.Sprintf(`{"_%s_open":false,"_%s_selected":%s, "_%s_multiple":%t}`, fieldId, fieldId, props.Selected, fieldId, props.Multiple) }
+		data-on:click__outside={ fmt.Sprintf("$_%s_open = false", fieldId) }
+	>
+		<!-- Selected chips -->
+		<label class={ fmt.Sprintf("flex text-%s-text font-bold text-xs pt-1", varient) } for={ fmt.Sprintf("select_id_%s", fieldId) }>
+			<div class="flex flex-col gap-2 w-full">
+				<span class="flex gap-2 items-center">
+					@Icon(props.LabelIcon)
+					{ props.Label }
+					if props.Required {
+						<i class="text-red-500 font-bold">*</i>
+					}
+				</span>
+			</div>
+		</label>
+		<div
+			class="flex min-h-14 w-full flex-wrap items-center gap-2 rounded-lg p-2"
+			data-on:click={ fmt.Sprintf(
+				"evt.stopPropagation(); $_%s_open = !$_%s_open",
+				fieldId,
+				fieldId,
+			) }
+		>
+			for _, option := range props.Options {
+				<div
+					data-class:rounded-full={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					data-class:border={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					data-class:border-neutral-600={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					data-class:px-2={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					data-class:py-2={ fmt.Sprintf("$_%s_multiple", fieldId) }
+					class={ fmt.Sprintf("flex w-auto items-center gap-2 text-sm text-%s-text", varient) }
+					style="display: none"
+					data-show={ fmt.Sprintf(
+						"$_%s_selected.includes('%s')",
+						fieldId,
+						option.Value,
+					) }
+				>
+					<span>{ option.Label }</span>
+					if props.Multiple {
+						<button
+							type="button"
+							class={ fmt.Sprintf("flex cursor-pointer items-center justify-center rounded-full text-%s-text hover:text-red-700", varient) }
+							data-on:click={ fmt.Sprintf(
+								"evt.stopPropagation(); $_%s_selected = $_%s_selected.filter(x => x !== '%s');",
+								fieldId,
+								fieldId,
+								option.Value,
+							) }
+						>
+							×
+						</button>
+					}
+				</div>
+			}
+			<!-- Placeholder -->
+			<span
+				class="px-1 text-sm text-neutral-500"
+				data-show={ fmt.Sprintf(
+					"$_%s_selected.length === 0",
+					fieldId,
+				) }
+				style="display: none"
+			>
+				{ props.MakePlaceholder() }
+			</span>
+			<!-- Chevron -->
+			<div class="ml-auto shrink-0 text-%s-text">
+				@Icon("chevron-down", []Attr{
+					{Name: "class", Value: "transition-transform"},
+					{Name: "data-class:rotate-180", Value: fmt.Sprintf("$_%s_open", fieldId)},
+				}...)
+			</div>
+		</div>
+		<!-- Dropdown -->
+		<div
+			class="absolute z-50 mt-2 w-full bg-black overflow-hidden rounded-lg p-2"
+			data-show={ fmt.Sprintf(
+				"$_%s_open",
+				fieldId,
+			) }
+		>
+			for _, option := range props.Options {
+				<div
+					class="flex items-center gap-4 rounded-lg px-4 py-3 text-xs hover:bg-blue-800"
+					if !option.Disabled {
+						if props.Multiple {
+							data-on:click={ fmt.Sprintf(
+								"$_%s_selected.includes('%s') ? $_%s_selected = $_%s_selected.filter(x => x !== '%s') : $_%s_selected = [...$_%s_selected, '%s']; $_%s_open = !$_%s_open",
+								fieldId,
+								option.Value,
+								fieldId,
+								fieldId,
+								option.Value,
+								fieldId,
+								fieldId,
+								option.Value,
+								fieldId,
+								fieldId,
+							) }
+						} else {
+							data-on:click={ fmt.Sprintf(
+								"$_%s_selected = ['%s']; $_%s_open = false",
+								fieldId,
+								option.Value,
+								fieldId,
+							) }
+						}
+					}
+				>
+					<div class="min-w-0 flex-1">
+						<div class="font-semibold text-%s-text">
+							{ option.Label }
+						</div>
+						if option.Subtitle != "" {
+							<div class="text-sm text-neutral-400">
+								{ option.Subtitle }
+							</div>
+						}
+					</div>
+					<!-- Checkmark -->
+					@Icon("check", []Attr{
+						{Name: "style", Value: "display:none;color:white;"},
+						{Name: "data-show", Value: fmt.Sprintf("$_%s_selected.includes('%s')", fieldId, option.Value)},
+					}...)
+				</div>
+			}
+		</div>
+		<!-- Actual submitted values -->
+		<select
+			{ AppendAttrs([]Attr{
+				{Name: "class", Value: "sr-only hidden" },
+				{Name: "name", Value: props.Name },
+				{Name: "multiple", Hide: !props.Multiple },
+			})... }
+		>
+			for _, option := range props.Options {
+				<option
+					{ AppendAttrs([]Attr{
+						{Name: "value", Value: option.Value },
+						{Name: "data-attr:selected", Value: fmt.Sprintf("$_%s_selected.includes('%s')",fieldId,option.Value) },
+					})... }
+				>{ option.Label }</option>
+			}
+		</select>
+	</div>
+}
+
+templ Switch(props InputBaseProps) {
+	@InputBase(props) {
+		<div
+			{ AppendAttrs([]Attr{
+                {Name: fmt.Sprintf("data-signals:checked_%s", props.Name), Value: "false"},
+                { Name: "class", Value: "flex"},
+            })... }
+		>
+			<input
+				{ props.MakeAttrs([]Attr{
+                { Name: "class", Value: "peer sr-only"},
+                { Name: "type", Value: "checkbox"},
+                { Name: fmt.Sprintf("data-bind:checked_%s", props.Name)},
+            }...)... }
+			/>
+			<div
+				{ AppendAttrs([]Attr{
+                {Name: "class", Value: "relative w-9 h-5 py-2 bg-neutral-quaternary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-soft dark:peer-focus:ring-brand-soft rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-buffer after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand border-1"},
+        })... }
+			></div>
+		</div>
+	}
+}
+
+templ Button(props InputBaseProps) {
+	{{ varient := utils.Coalesce(props.Varient, "default") }}
+	<button
+		{ props.MakeAttrs([]Attr{
+            {Name: "class",Value: fmt.Sprintf("htmx-request:pointer-events-none w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-bold transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed outline-none focus:outline-none bg-%s-light border-1 border-%s-light text-%s-text hover:border-%s-dark focus:ring-2 focus:ring-%s disabled:text-red-500", varient, varient, varient, varient, varient)},
+     }...)... }
+	>
+		if props.Loading {
+			@Spinner()
+		} else {
+			@Icon(props.IconBefore)
+		}
+		if (len(props.Label) > 0) {
+			<span>{ props.Label }</span>
+		} else {
+			{ children... }
+		}
+		@Icon(props.IconAfter)
+	</button>
+}

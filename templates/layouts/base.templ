@@ -3,12 +3,9 @@ package layouts
 templ BaseLayout() {
 	<html>
 		<head>
-			<script type="module" src="/static/js/datastar.min.js"></script>
-			<link rel="stylesheet" href="/static/css/app.css"/>
-			<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
-			<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+			<link rel="stylesheet" href="/static/css/app.css"/>
 			<style type="text/tailwindcss">
 				@theme {
 					/* Primary */
@@ -63,6 +60,10 @@ templ BaseLayout() {
 		</head>
 		<body class="bg-default-text">
 			{ children... }
+			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+			<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 		</body>
 	</html>
 }

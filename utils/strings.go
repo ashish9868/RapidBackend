@@ -33,7 +33,7 @@ func ToString(v any) string {
 	return fmt.Sprint(v)
 }
 
-func IFElse(cond bool, trueVal string, falseVal string) string {
+func IfElse[T any](cond bool, trueVal T, falseVal T) T {
 	if cond {
 		return trueVal
 	}

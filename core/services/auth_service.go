@@ -28,7 +28,7 @@ func (a *authService) ValidateLogin(form *dto.LoginForm, checkSuperadmin bool) (
 			validation.Required.Error("Password is required"),
 		),
 	)
-	collection := utils.IFElse(checkSuperadmin,
+	collection := utils.IfElse(checkSuperadmin,
 		respository.COLLECTION_SUPERADMINS,
 		respository.COLLECTION_USERS,
 	)

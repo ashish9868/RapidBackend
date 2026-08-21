@@ -75,17 +75,20 @@ func AuthMiddleware(repo *repository.AccessTokenRepository, redirect bool, throw
 				accessToken = cookie.Value
 			}
 
+			isHtmx := utils.IsHtmx(r)
 			user := repo.GetUserFromToken(accessToken)
 			if user != nil {
 				newCtx := context.WithValue(r.Context(), constants.USER_CONTEXT_KEY, user)
 				if strings.HasPrefix(r.URL.Path, "/login") {
-					http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
+					w.Header().Add("Hx-Redirect", "/dashboard")
+					http.Redirect(w, r, "/dashboard", utils.IfElse(isHtmx, http.StatusOK, http.StatusTemporaryRedirect))
 					return
 				}
 				next.ServeHTTP(w, r.WithContext(newCtx))
 				return
 			}
 			if redirect {
+				w.Header().Add("Hx-Redirect", "/dashboard")
 				http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 				return
 			} else if throw {

@@ -2,6 +2,7 @@ package superadmin
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ashish9868/rapidbackend/core"
 	"github.com/ashish9868/rapidbackend/core/services"
@@ -20,6 +21,7 @@ func SuperAdminLoginHandler() *core.ResourceHandler {
 		},
 		Create: &core.ResourceAction{
 			Handler: func(w http.ResponseWriter, r *http.Request, app *core.App) {
+				time.Sleep(5 * time.Second)
 				form := &dto.LoginForm{}
 				if err := app.BindSafely(w, r, form); err != nil {
 					app.RenderComponent(w, pages.LoginForm(form, err))
@@ -33,7 +35,7 @@ func SuperAdminLoginHandler() *core.ResourceHandler {
 					return
 				}
 				app.SetAuthCookie(w, token.Token, 24)
-				app.GetSSE(w, r).Redirect("/dashboard")
+				app.Redirect(w, r, "/dashboard")
 			},
 		},
 	}

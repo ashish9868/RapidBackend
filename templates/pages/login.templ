@@ -2,18 +2,19 @@ package pages
 
 import (
 	"github.com/ashish9868/rapidbackend/dto"
-	"github.com/ashish9868/rapidbackend/templates/components/forms"
+	"github.com/ashish9868/rapidbackend/templates/components"
 	"github.com/ashish9868/rapidbackend/templates/layouts"
 	"github.com/samber/lo"
 )
 
 templ LoginForm(login *dto.LoginForm, errors map[string]string) {
-	@forms.Form(&forms.FormProps{
+	@components.Form(&components.FormProps{
 		ID:     "superadmin_login_form",
 		Action: "/login",
 		Method: "post",
 		Errors: errors,
-		Fields: []forms.InputBaseProps{
+		Fields: []components.InputBaseProps{
+			{Type: "file", Name: "files", Label: "Choose Files", LabelIcon: "file", Max: 2},
 			{Type: "email", Name: "email", Label: "Email", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: lo.ValueOr(errors, "email", "")},
 			{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Name", Error: lo.ValueOr(errors, "password", "")},
 			{Type: "submit", Varient: "default", Label: "Login", IconBefore: "arrow-right"},

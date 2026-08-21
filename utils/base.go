@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"net/http"
 	"os"
 	"reflect"
 	"strings"
@@ -47,4 +48,8 @@ func IsTruthy(v interface{}) bool {
 	}
 
 	return true
+}
+
+func IsHtmx(r *http.Request) bool {
+	return r.Header.Get("Hx-Request") == "true"
 }

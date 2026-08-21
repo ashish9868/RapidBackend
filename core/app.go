@@ -25,7 +25,6 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/xid"
-	"github.com/starfederation/datastar-go/datastar"
 )
 
 type App struct {
@@ -115,7 +114,7 @@ func NewApp(embed embed.FS) *App {
 	}
 	app.serveStatic()
 	app.serveNoRoute()
-	app.DBMigrate()
+	// app.DBMigrate()
 	fmt.Printf("APP will start on PORT: %s\n\n", utils.SafeEnvGet("PORT", strconv.Itoa(constants.DEFAULT_PORT)))
 	return app
 }
@@ -262,8 +261,10 @@ func (a *App) GetUserFromRequest(r *http.Request) *models.User {
 	return nil
 }
 
-func (app *App) GetSSE(w http.ResponseWriter, r *http.Request) *datastar.ServerSentEventGenerator {
-	return datastar.NewSSE(w, r)
+func (app *App) Redirect(w http.ResponseWriter, r *http.Request, url string) {
+	isHtmx := r.Header.Get("Hx-Request") == "true"
+	w.Header().Add("HX-Redirect", url)
+	http.Redirect(w, r, url, utils.IfElse(isHtmx, http.StatusOK, http.StatusTemporaryRedirect))
 }
 
 func (app *App) SetAuthCookie(w http.ResponseWriter, value string, ageHours int) {

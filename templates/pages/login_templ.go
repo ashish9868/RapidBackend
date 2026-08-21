@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"github.com/ashish9868/rapidbackend/dto"
-	"github.com/ashish9868/rapidbackend/templates/components/forms"
+	"github.com/ashish9868/rapidbackend/templates/components"
 	"github.com/ashish9868/rapidbackend/templates/layouts"
 	"github.com/samber/lo"
 )
@@ -36,12 +36,13 @@ func LoginForm(login *dto.LoginForm, errors map[string]string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = forms.Form(&forms.FormProps{
+		templ_7745c5c3_Err = components.Form(&components.FormProps{
 			ID:     "superadmin_login_form",
 			Action: "/login",
 			Method: "post",
 			Errors: errors,
-			Fields: []forms.InputBaseProps{
+			Fields: []components.InputBaseProps{
+				{Type: "file", Name: "files", Label: "Choose Files", LabelIcon: "file", Max: 2},
 				{Type: "email", Name: "email", Label: "Email", LabelIcon: "mail", Placeholder: "Enter Name", Value: login.Email, Error: lo.ValueOr(errors, "email", "")},
 				{Type: "password", Name: "password", Label: "Password", LabelIcon: "key", Placeholder: "Enter Name", Error: lo.ValueOr(errors, "password", "")},
 				{Type: "submit", Varient: "default", Label: "Login", IconBefore: "arrow-right"},

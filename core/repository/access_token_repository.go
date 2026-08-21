@@ -18,7 +18,7 @@ func NewAccessTokenRepository(baseRepository *BaseRepository) *AccessTokenReposi
 func (a *AccessTokenRepository) CreateNewAccessToken(user *models.User) *models.AccessKeyToken {
 	token := &models.AccessKeyToken{
 		CollectionID: user.ID,
-		Collection:   utils.IFElse(user.Collection == COLLECTION_SUPERADMINS, COLLECTION_SUPERADMINS, COLLECTION_USERS),
+		Collection:   utils.IfElse(user.Collection == COLLECTION_SUPERADMINS, COLLECTION_SUPERADMINS, COLLECTION_USERS),
 		Token:        utils.GenerateRandomHash(),
 		CreatedAt:    time.Now(),
 		User:         user,
